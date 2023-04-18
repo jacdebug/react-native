@@ -10,17 +10,20 @@
 
 'use strict';
 
-const React = require('react');
-
-const {
+import * as React from 'react';
+import {useContext, useState} from 'react';
+import {
   Button,
   Platform,
   Text,
   TextInput,
   View,
   StyleSheet,
-} = require('react-native');
+} from 'react-native';
+import type {TextStyle} from 'react-native/Libraries/StyleSheet/StyleSheet';
 
+import RNTesterButton from '../../components/RNTesterButton';
+import {RNTesterThemeContext} from '../../components/RNTesterTheme';
 import type {RNTesterModuleExample} from '../../types/RNTesterTypes';
 
 const styles = StyleSheet.create({
@@ -49,9 +52,10 @@ const styles = StyleSheet.create({
   },
   label: {
     width: 115,
-    alignItems: 'flex-end',
+    textAlign: 'right',
     marginRight: 10,
     paddingTop: 2,
+    fontSize: 12,
   },
   inputContainer: {
     flex: 1,
@@ -72,15 +76,28 @@ const styles = StyleSheet.create({
     margin: 3,
     fontSize: 12,
   },
+  focusedUncontrolled: {
+    margin: -2,
+    borderWidth: 2,
+    borderColor: '#0a0a0a',
+    flex: 1,
+    fontSize: 13,
+    padding: 4,
+  },
+  screenshotArea: {
+    position: 'absolute',
+    top: -5,
+    left: 120,
+    right: -5,
+    bottom: -5,
+  },
 });
 
 class WithLabel extends React.Component<$FlowFixMeProps> {
-  render() {
+  render(): React.Node {
     return (
       <View style={styles.labelContainer}>
-        <View style={styles.label}>
-          <Text>{this.props.label}</Text>
-        </View>
+        <Text style={styles.label}>{this.props.label}</Text>
         <View style={styles.inputContainer}>{this.props.children}</View>
       </View>
     );
@@ -88,11 +105,11 @@ class WithLabel extends React.Component<$FlowFixMeProps> {
 }
 
 class RewriteExample extends React.Component<$FlowFixMeProps, any> {
-  constructor(props) {
+  constructor(props: any | void) {
     super(props);
     this.state = {text: ''};
   }
-  render() {
+  render(): React.Node {
     const limit = 20;
     const remainder = limit - this.state.text.length;
     const remainderColor = remainder > 5 ? 'blue' : 'red';
@@ -122,11 +139,11 @@ class RewriteExampleInvalidCharacters extends React.Component<
   $FlowFixMeProps,
   any,
 > {
-  constructor(props) {
+  constructor(props: any | void) {
     super(props);
     this.state = {text: ''};
   }
-  render() {
+  render(): React.Node {
     return (
       <View style={styles.rewriteContainer}>
         <TextInput
@@ -150,11 +167,11 @@ class RewriteInvalidCharactersAndClearExample extends React.Component<
 > {
   inputRef: ?React.ElementRef<typeof TextInput> = null;
 
-  constructor(props) {
+  constructor(props: any | void) {
     super(props);
     this.state = {text: ''};
   }
-  render() {
+  render(): React.Node {
     return (
       <View style={styles.rewriteContainer}>
         <TextInput
@@ -184,14 +201,16 @@ class RewriteInvalidCharactersAndClearExample extends React.Component<
   }
 }
 
-class BlurOnSubmitExample extends React.Component<{...}> {
-  ref1 = React.createRef();
-  ref2 = React.createRef();
-  ref3 = React.createRef();
-  ref4 = React.createRef();
-  ref5 = React.createRef();
+type ExampleRef = {current: null | {focus(): void, ...}};
 
-  render() {
+class BlurOnSubmitExample extends React.Component<{...}> {
+  ref1: ExampleRef = React.createRef();
+  ref2: ExampleRef = React.createRef();
+  ref3: ExampleRef = React.createRef();
+  ref4: ExampleRef = React.createRef();
+  ref5: ExampleRef = React.createRef();
+
+  render(): React.Node {
     return (
       <View>
         <TextInput
@@ -240,15 +259,106 @@ class BlurOnSubmitExample extends React.Component<{...}> {
   }
 }
 
+class SubmitBehaviorExample extends React.Component<{...}> {
+  ref1: ExampleRef = React.createRef();
+  ref2: ExampleRef = React.createRef();
+  ref3: ExampleRef = React.createRef();
+  ref4: ExampleRef = React.createRef();
+  ref5: ExampleRef = React.createRef();
+  ref6: ExampleRef = React.createRef();
+  ref7: ExampleRef = React.createRef();
+  ref8: ExampleRef = React.createRef();
+  ref9: ExampleRef = React.createRef();
+  ref10: ExampleRef = React.createRef();
+  ref11: ExampleRef = React.createRef();
+
+  render(): React.Node {
+    return (
+      <View>
+        <TextInput
+          ref={this.ref1}
+          placeholder="single line submit"
+          submitBehavior="submit"
+          onSubmitEditing={() => this.ref2.current?.focus()}
+        />
+        <TextInput
+          ref={this.ref2}
+          placeholder="single line blurAndSubmit"
+          submitBehavior="blurAndSubmit"
+          onSubmitEditing={() => this.ref3.current?.focus()}
+        />
+        <TextInput
+          ref={this.ref3}
+          placeholder="single line default"
+          onSubmitEditing={() => this.ref4.current?.focus()}
+        />
+        <TextInput
+          ref={this.ref4}
+          blurOnSubmit
+          placeholder="single line blurOnSubmit true"
+          onSubmitEditing={() => this.ref5.current?.focus()}
+        />
+        <TextInput
+          ref={this.ref5}
+          blurOnSubmit={false}
+          placeholder="single line blurOnSubmit false"
+          onSubmitEditing={() => this.ref6.current?.focus()}
+        />
+        <TextInput
+          ref={this.ref6}
+          multiline
+          placeholder="multiline submit"
+          submitBehavior="submit"
+          onSubmitEditing={() => this.ref7.current?.focus()}
+        />
+        <TextInput
+          ref={this.ref7}
+          multiline
+          placeholder="multiline blurAndSubmit"
+          submitBehavior="blurAndSubmit"
+          onSubmitEditing={() => this.ref8.current?.focus()}
+        />
+        <TextInput
+          ref={this.ref8}
+          multiline
+          blurOnSubmit
+          placeholder="multiline blurOnSubmit true"
+          onSubmitEditing={() => this.ref9.current?.focus()}
+        />
+        <TextInput
+          ref={this.ref9}
+          multiline
+          blurOnSubmit={false}
+          placeholder="multiline blurOnSubmit false"
+        />
+        <TextInput
+          ref={this.ref10}
+          multiline
+          placeholder="multiline newline"
+          submitBehavior="newline"
+        />
+        <TextInput ref={this.ref11} multiline placeholder="multiline default" />
+      </View>
+    );
+  }
+}
+
 class TextEventsExample extends React.Component<{...}, $FlowFixMeState> {
-  state = {
+  state:
+    | any
+    | {
+        curText: string,
+        prev2Text: string,
+        prev3Text: string,
+        prevText: string,
+      } = {
     curText: '<No Event>',
     prevText: '<No Event>',
     prev2Text: '<No Event>',
     prev3Text: '<No Event>',
   };
 
-  updateText = text => {
+  updateText = (text: string) => {
     this.setState(state => {
       return {
         curText: text,
@@ -259,7 +369,7 @@ class TextEventsExample extends React.Component<{...}, $FlowFixMeState> {
     });
   };
 
-  render() {
+  render(): React.Node {
     return (
       <View>
         <TextInput
@@ -305,11 +415,11 @@ class TokenizedTextExample extends React.Component<
   $FlowFixMeProps,
   $FlowFixMeState,
 > {
-  constructor(props) {
+  constructor(props: any | void) {
     super(props);
     this.state = {text: 'Hello #World'};
   }
-  render() {
+  render(): React.Node {
     //define delimiter
     let delimiter = /\s+/;
 
@@ -379,6 +489,8 @@ class SelectionExample extends React.Component<
 > {
   _textInput: React.ElementRef<typeof TextInput> | null = null;
 
+  /* $FlowFixMe[missing-local-annot] The type annotation(s) required by Flow's
+   * LTI update could not be added via codemod */
   constructor(props) {
     super(props);
     this.state = {
@@ -387,16 +499,18 @@ class SelectionExample extends React.Component<
     };
   }
 
+  /* $FlowFixMe[missing-local-annot] The type annotation(s) required by Flow's
+   * LTI update could not be added via codemod */
   onSelectionChange({nativeEvent: {selection}}) {
     this.setState({selection});
   }
 
-  getRandomPosition() {
+  getRandomPosition(): number {
     const length = this.state.value.length;
     return Math.round(Math.random() * length);
   }
 
-  select(start, end) {
+  select(start: number, end: number) {
     this._textInput?.focus();
     this.setState({selection: {start, end}});
     if (this.props.imperative) {
@@ -412,7 +526,7 @@ class SelectionExample extends React.Component<
     this.select(...positions);
   }
 
-  placeAt(position) {
+  placeAt(position: number) {
     this.select(position, position);
   }
 
@@ -420,7 +534,7 @@ class SelectionExample extends React.Component<
     this.placeAt(this.getRandomPosition());
   }
 
-  render() {
+  render(): React.Node {
     const length = this.state.value.length;
 
     return (
@@ -471,6 +585,253 @@ class SelectionExample extends React.Component<
       </View>
     );
   }
+}
+
+function UncontrolledExample() {
+  const [isFocused, setIsFocused] = React.useState(false);
+
+  return (
+    <TextInput
+      defaultValue="Hello World!"
+      testID="uncontrolled-textinput"
+      style={isFocused ? styles.focusedUncontrolled : styles.default}
+      onFocus={() => setIsFocused(true)}
+      onBlur={() => setIsFocused(false)}
+    />
+  );
+}
+
+const TextStylesExample = React.memo(() => {
+  const theme = useContext(RNTesterThemeContext);
+
+  return (
+    <TextStylesContainer
+      examples={[
+        {
+          name: 'backgroundColor',
+          textStyles: [
+            {backgroundColor: theme.SystemBackgroundColor},
+            {backgroundColor: 'red'},
+            {backgroundColor: 'orange'},
+            {backgroundColor: 'yellow'},
+            {backgroundColor: 'green'},
+            {backgroundColor: 'blue'},
+          ],
+        },
+        {
+          name: 'color',
+          textStyles: [
+            {color: theme.LabelColor},
+            {color: 'red'},
+            {color: 'orange'},
+            {color: 'yellow'},
+            {color: 'green'},
+            {color: 'blue'},
+          ],
+        },
+        {
+          name: 'fontFamily',
+          textStyles: [
+            {fontFamily: 'sans-serif'},
+            {fontFamily: 'serif'},
+            {fontFamily: 'monospace'},
+          ],
+        },
+        {
+          name: 'fontSize',
+          textStyles: [
+            {fontSize: 8},
+            {fontSize: 10},
+            {fontSize: 12},
+            {fontSize: 14},
+            {fontSize: 16},
+            {fontSize: 18},
+          ],
+        },
+        {
+          name: 'fontStyle',
+          textStyles: [{fontStyle: 'normal'}, {fontStyle: 'italic'}],
+        },
+        {
+          name: 'fontWeight',
+          textStyles: [
+            {fontWeight: 'normal'},
+            {fontWeight: 'bold'},
+            {fontWeight: '200'},
+            {fontWeight: '400'},
+            {fontWeight: '600'},
+            {fontWeight: '800'},
+          ],
+        },
+        {
+          name: 'letterSpacing',
+          textStyles: [
+            {letterSpacing: 0},
+            {letterSpacing: 1},
+            {letterSpacing: 2},
+            {letterSpacing: 3},
+            {letterSpacing: 4},
+            {letterSpacing: 5},
+          ],
+        },
+        {
+          name: 'lineHeight',
+          multiline: true,
+          textStyles: [
+            {lineHeight: 4},
+            {lineHeight: 8},
+            {lineHeight: 16},
+            {lineHeight: 24},
+          ],
+        },
+        {
+          name: 'textDecorationLine',
+          textStyles: [
+            {textDecorationLine: 'none'},
+            {textDecorationLine: 'underline'},
+            {textDecorationLine: 'line-through'},
+            {textDecorationLine: 'underline line-through'},
+          ],
+        },
+        {
+          name: 'textShadow',
+          textStyles: [
+            {
+              textShadowColor: 'black',
+              textShadowOffset: {width: 0, height: 0},
+              textShadowRadius: 0,
+            },
+            {
+              textShadowColor: 'black',
+              textShadowOffset: {width: 0, height: 0},
+              textShadowRadius: 5,
+            },
+            {
+              textShadowColor: 'red',
+              textShadowOffset: {width: 0, height: 0},
+              textShadowRadius: 5,
+            },
+            {
+              textShadowColor: 'blue',
+              textShadowOffset: {width: 0, height: -5},
+              textShadowRadius: 5,
+            },
+            {
+              textShadowColor: 'green',
+              textShadowOffset: {width: 0, height: 5},
+              textShadowRadius: 5,
+            },
+            {
+              textShadowColor: 'orange',
+              textShadowOffset: {width: 10, height: 0},
+              textShadowRadius: 5,
+            },
+          ],
+        },
+      ]}
+    />
+  );
+});
+
+type TextStylesContainerProps = {
+  examples: $ReadOnlyArray<{
+    name: string,
+    textStyles: $ReadOnlyArray<TextStyle>,
+    multiline?: boolean,
+  }>,
+};
+
+function TextStylesContainer({examples}: TextStylesContainerProps) {
+  const [offset, setOffset] = useState(0);
+
+  const MAX_CYCLES = 6;
+
+  return (
+    <View>
+      <RNTesterButton
+        testID="cycle-styles"
+        textTestID="cycle-styles-label"
+        onPress={() => setOffset((offset + 1) % MAX_CYCLES)}>
+        Cycle {offset + 1}/{MAX_CYCLES}
+      </RNTesterButton>
+      <View>
+        <View testID="styles-screenshot-area" style={styles.screenshotArea} />
+        {examples.map(({name, multiline, textStyles}) => (
+          <WithLabel label={name} key={name}>
+            {multiline ? (
+              <MultilineStyledTextInput
+                name={name}
+                textStyles={textStyles}
+                styleOffset={offset}
+              />
+            ) : (
+              <StyledTextInput
+                name={name}
+                textStyles={textStyles}
+                styleOffset={offset}
+              />
+            )}
+          </WithLabel>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+type StyledTextInputProps = {
+  name: string,
+  textStyles: $ReadOnlyArray<TextStyle>,
+  styleOffset: number,
+};
+
+function StyledTextInput({
+  name,
+  textStyles,
+  styleOffset,
+}: StyledTextInputProps) {
+  return (
+    <TextInput
+      style={[
+        styles.default,
+        textStyles[(0 + styleOffset) % textStyles.length],
+      ]}
+      testID={`style-${name}`}>
+      <Text>He</Text>
+      <Text style={textStyles[(1 + styleOffset) % textStyles.length]}>ll</Text>
+      <Text style={textStyles[(2 + styleOffset) % textStyles.length]}>
+        o,
+        <Text style={textStyles[(0 + styleOffset) % textStyles.length]}> </Text>
+      </Text>
+      <Text style={textStyles[(3 + styleOffset) % textStyles.length]}>Wo</Text>
+      <Text style={textStyles[(4 + styleOffset) % textStyles.length]}>rl</Text>
+      <Text style={textStyles[(5 + styleOffset) % textStyles.length]}>d!</Text>
+    </TextInput>
+  );
+}
+
+function MultilineStyledTextInput({
+  name,
+  textStyles,
+  styleOffset,
+}: StyledTextInputProps) {
+  return (
+    <TextInput
+      multiline={true}
+      style={[
+        styles.default,
+        textStyles[(0 + styleOffset) % textStyles.length],
+      ]}
+      testID={`style-${name}`}>
+      <Text>Hel{'\n'}</Text>
+      <Text style={textStyles[(1 + styleOffset) % textStyles.length]}>
+        lo {'\n'}
+      </Text>
+      <Text style={textStyles[(2 + styleOffset) % textStyles.length]}>
+        Wor{'\n'}
+      </Text>
+      <Text style={textStyles[(3 + styleOffset) % textStyles.length]}>ld!</Text>
+    </TextInput>
+  );
 }
 
 module.exports = ([
@@ -589,9 +950,62 @@ module.exports = ([
     },
   },
   {
+    title: 'Input modes',
+    name: 'inputModes',
+    render: function (): React.Node {
+      const inputMode = [
+        'none',
+        'text',
+        'decimal',
+        'numeric',
+        'tel',
+        'search',
+        'email',
+        'url',
+      ];
+      const examples = inputMode.map(mode => {
+        return (
+          <WithLabel key={mode} label={mode}>
+            <TextInput inputMode={mode} style={styles.default} />
+          </WithLabel>
+        );
+      });
+      return <View>{examples}</View>;
+    },
+  },
+  {
     title: 'Blur on submit',
     render: function (): React.Element<any> {
       return <BlurOnSubmitExample />;
+    },
+  },
+  {
+    title: 'enterKeyHint modes',
+    name: 'enterKeyHintTypes',
+    render: function (): React.Node {
+      const enterKeyHintTypesHints = [
+        'enter',
+        'done',
+        'go',
+        'next',
+        'previous',
+        'search',
+        'send',
+      ];
+      const examples = enterKeyHintTypesHints.map(hint => {
+        return (
+          <WithLabel key={hint} label={hint}>
+            <TextInput enterKeyHint={hint} style={styles.default} />
+          </WithLabel>
+        );
+      });
+      return <View>{examples}</View>;
+    },
+  },
+  {
+    title: 'Submit behavior',
+    render: function (): React.Element<any> {
+      return <SubmitBehaviorExample />;
     },
   },
   {
@@ -691,5 +1105,15 @@ module.exports = ([
         </View>
       );
     },
+  },
+  {
+    title: 'Uncontrolled component with layout changes',
+    name: 'uncontrolledComponent',
+    render: () => <UncontrolledExample />,
+  },
+  {
+    title: 'Text styles',
+    name: 'textStyles',
+    render: () => <TextStylesExample />,
   },
 ]: Array<RNTesterModuleExample>);

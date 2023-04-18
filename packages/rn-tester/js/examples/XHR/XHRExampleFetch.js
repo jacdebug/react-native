@@ -28,6 +28,7 @@ class XHRExampleFetch extends React.Component<any, any> {
   }
 
   submit(uri: string) {
+    // $FlowFixMe[unused-promise]
     fetch(uri)
       .then(response => {
         this.responseURL = response.url;
@@ -39,12 +40,12 @@ class XHRExampleFetch extends React.Component<any, any> {
       });
   }
 
-  _renderHeaders() {
+  _renderHeaders(): null | Array<React.Node> {
     if (!this.responseHeaders) {
       return null;
     }
 
-    const responseHeaders = [];
+    const responseHeaders: Array<React.Node> = [];
     const keys = Object.keys(this.responseHeaders.map);
     for (let i = 0; i < keys.length; i++) {
       const key = keys[i];

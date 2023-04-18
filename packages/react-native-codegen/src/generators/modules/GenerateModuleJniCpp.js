@@ -22,7 +22,7 @@ import type {
 
 import type {AliasResolver} from './Utils';
 const {createAliasResolver, getModules} = require('./Utils');
-const {unwrapNullable} = require('../../parsers/flow/modules/utils');
+const {unwrapNullable} = require('../../parsers/parsers-commons');
 
 type FilesOutput = Map<string, string>;
 
@@ -91,12 +91,10 @@ const FileTemplate = ({
   libraryName: string,
   include: string,
   modules: string,
-  moduleLookups: $ReadOnlyArray<
-    $ReadOnly<{
-      hasteModuleName: string,
-      moduleName: string,
-    }>,
-  >,
+  moduleLookups: $ReadOnlyArray<{
+    hasteModuleName: string,
+    moduleName: string,
+  }>,
 }>) => {
   return `
 /**
@@ -154,6 +152,30 @@ function translateReturnTypeToKind(
       return 'StringKind';
     case 'BooleanTypeAnnotation':
       return 'BooleanKind';
+    case 'EnumDeclaration':
+      switch (typeAnnotation.memberType) {
+        case 'NumberTypeAnnotation':
+          return 'NumberKind';
+        case 'StringTypeAnnotation':
+          return 'StringKind';
+        default:
+          throw new Error(
+            `Unknown enum prop type for returning value, found: ${realTypeAnnotation.type}"`,
+          );
+      }
+    case 'UnionTypeAnnotation':
+      switch (typeAnnotation.memberType) {
+        case 'NumberTypeAnnotation':
+          return 'NumberKind';
+        case 'ObjectTypeAnnotation':
+          return 'ObjectKind';
+        case 'StringTypeAnnotation':
+          return 'StringKind';
+        default:
+          throw new Error(
+            `Unsupported union member returning value, found: ${realTypeAnnotation.memberType}"`,
+          );
+      }
     case 'NumberTypeAnnotation':
       return 'NumberKind';
     case 'DoubleTypeAnnotation':
@@ -209,6 +231,30 @@ function translateParamTypeToJniType(
       return 'Ljava/lang/String;';
     case 'BooleanTypeAnnotation':
       return !isRequired ? 'Ljava/lang/Boolean;' : 'Z';
+    case 'EnumDeclaration':
+      switch (typeAnnotation.memberType) {
+        case 'NumberTypeAnnotation':
+          return !isRequired ? 'Ljava/lang/Double;' : 'D';
+        case 'StringTypeAnnotation':
+          return 'Ljava/lang/String;';
+        default:
+          throw new Error(
+            `Unknown enum prop type for method arg, found: ${realTypeAnnotation.type}"`,
+          );
+      }
+    case 'UnionTypeAnnotation':
+      switch (typeAnnotation.memberType) {
+        case 'NumberTypeAnnotation':
+          return !isRequired ? 'Ljava/lang/Double;' : 'D';
+        case 'ObjectTypeAnnotation':
+          return 'Lcom/facebook/react/bridge/ReadableMap;';
+        case 'StringTypeAnnotation':
+          return 'Ljava/lang/String;';
+        default:
+          throw new Error(
+            `Unsupported union prop value, found: ${realTypeAnnotation.memberType}"`,
+          );
+      }
     case 'NumberTypeAnnotation':
       return !isRequired ? 'Ljava/lang/Double;' : 'D';
     case 'DoubleTypeAnnotation':
@@ -261,6 +307,30 @@ function translateReturnTypeToJniType(
       return 'Ljava/lang/String;';
     case 'BooleanTypeAnnotation':
       return nullable ? 'Ljava/lang/Boolean;' : 'Z';
+    case 'EnumDeclaration':
+      switch (typeAnnotation.memberType) {
+        case 'NumberTypeAnnotation':
+          return nullable ? 'Ljava/lang/Double;' : 'D';
+        case 'StringTypeAnnotation':
+          return 'Ljava/lang/String;';
+        default:
+          throw new Error(
+            `Unknown enum prop type for method return type, found: ${realTypeAnnotation.type}"`,
+          );
+      }
+    case 'UnionTypeAnnotation':
+      switch (typeAnnotation.memberType) {
+        case 'NumberTypeAnnotation':
+          return nullable ? 'Ljava/lang/Double;' : 'D';
+        case 'ObjectTypeAnnotation':
+          return 'Lcom/facebook/react/bridge/WritableMap;';
+        case 'StringTypeAnnotation':
+          return 'Ljava/lang/String;';
+        default:
+          throw new Error(
+            `Unsupported union member type, found: ${realTypeAnnotation.memberType}"`,
+          );
+      }
     case 'NumberTypeAnnotation':
       return nullable ? 'Ljava/lang/Double;' : 'D';
     case 'DoubleTypeAnnotation':
@@ -368,10 +438,10 @@ module.exports = {
       .sort()
       .map(hasteModuleName => {
         const {
-          aliases,
+          aliasMap,
           spec: {properties},
         } = nativeModules[hasteModuleName];
-        const resolveAlias = createAliasResolver(aliases);
+        const resolveAlias = createAliasResolver(aliasMap);
 
         const translatedMethods = properties
           .map(property =>
@@ -415,8 +485,10 @@ module.exports = {
       })
       .join('\n');
 
-    // $FlowFixMe[missing-type-arg]
-    const moduleLookups = Object.keys(nativeModules)
+    const moduleLookups: $ReadOnlyArray<{
+      hasteModuleName: string,
+      moduleName: string,
+    }> = Object.keys(nativeModules)
       .filter(hasteModuleName => {
         const module = nativeModules[hasteModuleName];
         return !(
@@ -425,10 +497,8 @@ module.exports = {
         );
       })
       .sort((a, b) => {
-        const moduleA = nativeModules[a];
-        const moduleB = nativeModules[b];
-        const nameA = moduleA.moduleNames[0];
-        const nameB = moduleB.moduleNames[0];
+        const nameA = nativeModules[a].moduleName;
+        const nameB = nativeModules[b].moduleName;
         if (nameA < nameB) {
           return -1;
         } else if (nameA > nameB) {
@@ -436,15 +506,10 @@ module.exports = {
         }
         return 0;
       })
-      .flatMap<{moduleName: string, hasteModuleName: string}>(
-        (hasteModuleName: string) => {
-          const {moduleNames} = nativeModules[hasteModuleName];
-          return moduleNames.map(moduleName => ({
-            moduleName,
-            hasteModuleName,
-          }));
-        },
-      );
+      .map((hasteModuleName: string) => ({
+        moduleName: nativeModules[hasteModuleName].moduleName,
+        hasteModuleName,
+      }));
 
     const fileName = `${libraryName}-generated.cpp`;
     const replacedTemplate = FileTemplate({

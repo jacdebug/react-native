@@ -17,20 +17,32 @@
  *   * Creates a gemfile
  */
 const fs = require('fs');
+const os = require('os');
+const path = require('path');
 const {cat, echo, exec, exit, sed} = require('shelljs');
 const yargs = require('yargs');
-const {parseVersion} = require('./version-utils');
+const {parseVersion, validateBuildType} = require('./version-utils');
+const {saveFiles} = require('./scm-utils');
 
-let argv = yargs.option('v', {
-  alias: 'to-version',
-  type: 'string',
-}).argv;
+let argv = yargs
+  .option('v', {
+    alias: 'to-version',
+    type: 'string',
+    required: true,
+  })
+  .option('b', {
+    alias: 'build-type',
+    type: 'string',
+    required: true,
+  }).argv;
 
+const buildType = argv.buildType;
 const version = argv.toVersion;
 
-if (!version) {
-  echo('You must specify a version using -v');
-  exit(1);
+try {
+  validateBuildType(buildType);
+} catch (e) {
+  throw e;
 }
 
 let major,
@@ -38,14 +50,26 @@ let major,
   patch,
   prerelease = -1;
 try {
-  ({major, minor, patch, prerelease} = parseVersion(version));
+  ({major, minor, patch, prerelease} = parseVersion(version, buildType));
 } catch (e) {
-  echo(e.message);
-  exit(1);
+  throw e;
 }
 
+const tmpVersioningFolder = fs.mkdtempSync(
+  path.join(os.tmpdir(), 'rn-set-version'),
+);
+echo(`The temp versioning folder is ${tmpVersioningFolder}`);
+
+saveFiles(
+  [
+    'packages/react-native/package.json',
+    'packages/react-native/template/package.json',
+  ],
+  tmpVersioningFolder,
+);
+
 fs.writeFileSync(
-  'ReactAndroid/src/main/java/com/facebook/react/modules/systeminfo/ReactNativeVersion.java',
+  'packages/react-native/ReactAndroid/src/main/java/com/facebook/react/modules/systeminfo/ReactNativeVersion.java',
   cat('scripts/versiontemplates/ReactNativeVersion.java.template')
     .replace('${major}', major)
     .replace('${minor}', minor)
@@ -58,7 +82,7 @@ fs.writeFileSync(
 );
 
 fs.writeFileSync(
-  'React/Base/RCTVersion.m',
+  'packages/react-native/React/Base/RCTVersion.m',
   cat('scripts/versiontemplates/RCTVersion.m.template')
     .replace('${major}', `@(${major})`)
     .replace('${minor}', `@(${minor})`)
@@ -71,7 +95,7 @@ fs.writeFileSync(
 );
 
 fs.writeFileSync(
-  'ReactCommon/cxxreact/ReactNativeVersion.h',
+  'packages/react-native/ReactCommon/cxxreact/ReactNativeVersion.h',
   cat('scripts/versiontemplates/ReactNativeVersion.h.template')
     .replace('${major}', major)
     .replace('${minor}', minor)
@@ -84,7 +108,7 @@ fs.writeFileSync(
 );
 
 fs.writeFileSync(
-  'Libraries/Core/ReactNativeVersion.js',
+  'packages/react-native/Libraries/Core/ReactNativeVersion.js',
   cat('scripts/versiontemplates/ReactNativeVersion.js.template')
     .replace('${major}', major)
     .replace('${minor}', minor)
@@ -96,32 +120,26 @@ fs.writeFileSync(
   'utf-8',
 );
 
-let packageJson = JSON.parse(cat('package.json'));
+const packageJson = JSON.parse(cat('packages/react-native/package.json'));
 packageJson.version = version;
-delete packageJson.workspaces;
-delete packageJson.private;
 
-// Copy repo-config/package.json dependencies as devDependencies
-const repoConfigJson = JSON.parse(cat('repo-config/package.json'));
-packageJson.devDependencies = {
-  ...packageJson.devDependencies,
-  ...repoConfigJson.dependencies,
-};
-// Make react-native-codegen a direct dependency of react-native
-delete packageJson.devDependencies['react-native-codegen'];
-packageJson.dependencies = {
-  ...packageJson.dependencies,
-  'react-native-codegen': repoConfigJson.dependencies['react-native-codegen'],
-};
-fs.writeFileSync('package.json', JSON.stringify(packageJson, null, 2), 'utf-8');
+fs.writeFileSync(
+  'packages/react-native/package.json',
+  JSON.stringify(packageJson, null, 2),
+  'utf-8',
+);
 
 // Change ReactAndroid/gradle.properties
+saveFiles(
+  ['packages/react-native/ReactAndroid/gradle.properties'],
+  tmpVersioningFolder,
+);
 if (
   sed(
     '-i',
     /^VERSION_NAME=.*/,
     `VERSION_NAME=${version}`,
-    'ReactAndroid/gradle.properties',
+    'packages/react-native/ReactAndroid/gradle.properties',
   ).code
 ) {
   echo("Couldn't update version for Gradle");
@@ -131,33 +149,30 @@ if (
 // Change react-native version in the template's package.json
 exec(`node scripts/set-rn-template-version.js ${version}`);
 
-// Make sure to update ruby version
-if (exec('scripts/update-ruby.sh').code) {
-  echo('Failed to update Ruby version');
-  exit(1);
-}
-
 // Verify that files changed, we just do a git diff and check how many times version is added across files
 const filesToValidate = [
-  'package.json',
-  'ReactAndroid/gradle.properties',
-  'template/package.json',
+  'packages/react-native/package.json',
+  'packages/react-native/ReactAndroid/gradle.properties',
+  'packages/react-native/template/package.json',
 ];
+
 const numberOfChangedLinesWithNewVersion = exec(
-  `git diff -U0 ${filesToValidate.join(
-    ' ',
-  )}| grep '^[+]' | grep -c ${version} `,
+  `diff -r ${tmpVersioningFolder} . | grep '^[>]' | grep -c ${version} `,
   {silent: true},
 ).stdout.trim();
 
 if (+numberOfChangedLinesWithNewVersion !== filesToValidate.length) {
+  // TODO: the logic that checks whether all the changes have been applied
+  // is missing several files. For example, it is not checking Ruby version nor that
+  // the Objecive-C files, the codegen and other files are properly updated.
+  // We are going to work on this in another PR.
+  echo('WARNING:');
   echo(
     `Failed to update all the files: [${filesToValidate.join(
       ', ',
     )}] must have versions in them`,
   );
-  echo('Fix the issue and try again');
-  exit(1);
+  echo(`These files already had version ${version} set.`);
 }
 
 exit(0);

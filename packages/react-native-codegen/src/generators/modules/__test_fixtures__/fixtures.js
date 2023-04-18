@@ -16,11 +16,12 @@ const EMPTY_NATIVE_MODULES: SchemaType = {
   modules: {
     NativeSampleTurboModule: {
       type: 'NativeModule',
-      aliases: {},
+      aliasMap: {},
+      enumMap: {},
       spec: {
         properties: [],
       },
-      moduleNames: ['SampleTurboModule'],
+      moduleName: 'SampleTurboModule',
     },
   },
 };
@@ -29,7 +30,58 @@ const SIMPLE_NATIVE_MODULES: SchemaType = {
   modules: {
     NativeSampleTurboModule: {
       type: 'NativeModule',
-      aliases: {},
+      aliasMap: {},
+      enumMap: {
+        NumEnum: {
+          type: 'EnumDeclarationWithMembers',
+          name: 'NumEnum',
+          memberType: 'NumberTypeAnnotation',
+          members: [
+            {
+              name: 'ONE',
+              value: '1',
+            },
+            {
+              name: 'TWO',
+              value: '2',
+            },
+          ],
+        },
+        FloatEnum: {
+          type: 'EnumDeclarationWithMembers',
+          name: 'FloatEnum',
+          memberType: 'NumberTypeAnnotation',
+          members: [
+            {
+              name: 'POINT_ZERO',
+              value: '0.0',
+            },
+            {
+              name: 'POINT_ONE',
+              value: '0.1',
+            },
+            {
+              name: 'POINT_TWO',
+              value: '0.2',
+            },
+          ],
+        },
+        StringEnum: {
+          type: 'EnumDeclarationWithMembers',
+          name: 'StringEnum',
+          memberType: 'StringTypeAnnotation',
+          members: [
+            {
+              name: 'HELLO',
+              value: 'hello',
+            },
+            {
+              name: 'GoodBye',
+              value: 'goodbye',
+            },
+          ],
+        },
+      },
       spec: {
         properties: [
           {
@@ -234,6 +286,19 @@ const SIMPLE_NATIVE_MODULES: SchemaType = {
             },
           },
           {
+            name: 'getEnumReturn',
+            optional: false,
+            typeAnnotation: {
+              type: 'FunctionTypeAnnotation',
+              returnTypeAnnotation: {
+                type: 'EnumDeclaration',
+                name: 'NumEnum',
+                memberType: 'NumberTypeAnnotation',
+              },
+              params: [],
+            },
+          },
+          {
             name: 'getValueWithCallback',
             optional: false,
             typeAnnotation: {
@@ -275,9 +340,67 @@ const SIMPLE_NATIVE_MODULES: SchemaType = {
               ],
             },
           },
+          {
+            name: 'getValueWithOptionalArg',
+            optional: false,
+            typeAnnotation: {
+              type: 'FunctionTypeAnnotation',
+              returnTypeAnnotation: {
+                type: 'PromiseTypeAnnotation',
+              },
+              params: [
+                {
+                  optional: true,
+                  name: 'parameter',
+                  typeAnnotation: {
+                    type: 'GenericObjectTypeAnnotation',
+                  },
+                },
+              ],
+            },
+          },
+          {
+            name: 'getEnums',
+            optional: false,
+            typeAnnotation: {
+              type: 'FunctionTypeAnnotation',
+              returnTypeAnnotation: {
+                type: 'StringTypeAnnotation',
+              },
+              params: [
+                {
+                  name: 'enumInt',
+                  optional: false,
+                  typeAnnotation: {
+                    name: 'NumEnum',
+                    type: 'EnumDeclaration',
+                    memberType: 'NumberTypeAnnotation',
+                  },
+                },
+                {
+                  name: 'enumFloat',
+                  optional: false,
+                  typeAnnotation: {
+                    name: 'FloatEnum',
+                    type: 'EnumDeclaration',
+                    memberType: 'NumberTypeAnnotation',
+                  },
+                },
+                {
+                  name: 'enumString',
+                  optional: false,
+                  typeAnnotation: {
+                    name: 'StringEnum',
+                    type: 'EnumDeclaration',
+                    memberType: 'StringTypeAnnotation',
+                  },
+                },
+              ],
+            },
+          },
         ],
       },
-      moduleNames: ['SampleTurboModule'],
+      moduleName: 'SampleTurboModule',
     },
   },
 };
@@ -286,7 +409,8 @@ const TWO_MODULES_DIFFERENT_FILES: SchemaType = {
   modules: {
     NativeSampleTurboModule: {
       type: 'NativeModule',
-      aliases: {},
+      aliasMap: {},
+      enumMap: {},
       spec: {
         properties: [
           {
@@ -302,11 +426,12 @@ const TWO_MODULES_DIFFERENT_FILES: SchemaType = {
           },
         ],
       },
-      moduleNames: ['SampleTurboModule'],
+      moduleName: 'SampleTurboModule',
     },
     NativeSampleTurboModule2: {
       type: 'NativeModule',
-      aliases: {},
+      aliasMap: {},
+      enumMap: {},
       spec: {
         properties: [
           {
@@ -334,7 +459,7 @@ const TWO_MODULES_DIFFERENT_FILES: SchemaType = {
           },
         ],
       },
-      moduleNames: ['SampleTurboModule2'],
+      moduleName: 'SampleTurboModule2',
     },
   },
 };
@@ -343,7 +468,8 @@ const COMPLEX_OBJECTS: SchemaType = {
   modules: {
     NativeSampleTurboModule: {
       type: 'NativeModule',
-      aliases: {},
+      aliasMap: {},
+      enumMap: {},
       spec: {
         properties: [
           {
@@ -700,7 +826,7 @@ const COMPLEX_OBJECTS: SchemaType = {
           },
         ],
       },
-      moduleNames: ['SampleTurboModule'],
+      moduleName: 'SampleTurboModule',
     },
   },
 };
@@ -709,7 +835,7 @@ const NATIVE_MODULES_WITH_TYPE_ALIASES: SchemaType = {
   modules: {
     AliasTurboModule: {
       type: 'NativeModule',
-      aliases: {
+      aliasMap: {
         Options: {
           type: 'ObjectTypeAnnotation',
           properties: [
@@ -799,6 +925,7 @@ const NATIVE_MODULES_WITH_TYPE_ALIASES: SchemaType = {
           ],
         },
       },
+      enumMap: {},
       spec: {
         properties: [
           {
@@ -835,7 +962,7 @@ const NATIVE_MODULES_WITH_TYPE_ALIASES: SchemaType = {
           },
         ],
       },
-      moduleNames: ['AliasTurboModule'],
+      moduleName: 'AliasTurboModule',
     },
   },
 };
@@ -844,7 +971,7 @@ const REAL_MODULE_EXAMPLE: SchemaType = {
   modules: {
     NativeCameraRollManager: {
       type: 'NativeModule',
-      aliases: {
+      aliasMap: {
         PhotoIdentifierImage: {
           type: 'ObjectTypeAnnotation',
           properties: [
@@ -1083,6 +1210,7 @@ const REAL_MODULE_EXAMPLE: SchemaType = {
           ],
         },
       },
+      enumMap: {},
       spec: {
         properties: [
           {
@@ -1167,78 +1295,11 @@ const REAL_MODULE_EXAMPLE: SchemaType = {
           },
         ],
       },
-      moduleNames: ['CameraRollManager'],
-    },
-    NativeImagePickerIOS: {
-      type: 'NativeModule',
-      aliases: {},
-      spec: {
-        properties: [
-          {
-            name: 'openCameraDialog',
-            optional: false,
-            typeAnnotation: {
-              type: 'FunctionTypeAnnotation',
-              returnTypeAnnotation: {
-                type: 'VoidTypeAnnotation',
-              },
-              params: [
-                {
-                  optional: false,
-                  name: 'config',
-                  typeAnnotation: {
-                    type: 'ObjectTypeAnnotation',
-                    properties: [
-                      {
-                        optional: false,
-                        name: 'unmirrorFrontFacingCamera',
-                        typeAnnotation: {
-                          type: 'BooleanTypeAnnotation',
-                        },
-                      },
-                      {
-                        optional: false,
-                        name: 'videoMode',
-                        typeAnnotation: {
-                          type: 'BooleanTypeAnnotation',
-                        },
-                      },
-                    ],
-                  },
-                },
-                {
-                  name: 'successCallback',
-                  optional: false,
-                  typeAnnotation: {
-                    type: 'FunctionTypeAnnotation',
-                    params: [],
-                    returnTypeAnnotation: {
-                      type: 'VoidTypeAnnotation',
-                    },
-                  },
-                },
-                {
-                  name: 'cancelCallback',
-                  optional: false,
-                  typeAnnotation: {
-                    type: 'FunctionTypeAnnotation',
-                    params: [],
-                    returnTypeAnnotation: {
-                      type: 'VoidTypeAnnotation',
-                    },
-                  },
-                },
-              ],
-            },
-          },
-        ],
-      },
-      moduleNames: ['ImagePickerIOS'],
-      excludedPlatforms: ['android'],
+      moduleName: 'CameraRollManager',
     },
     NativeExceptionsManager: {
       type: 'NativeModule',
-      aliases: {
+      aliasMap: {
         StackFrame: {
           properties: [
             {
@@ -1345,6 +1406,7 @@ const REAL_MODULE_EXAMPLE: SchemaType = {
           type: 'ObjectTypeAnnotation',
         },
       },
+      enumMap: {},
       spec: {
         properties: [
           {
@@ -1497,7 +1559,7 @@ const REAL_MODULE_EXAMPLE: SchemaType = {
           },
         ],
       },
-      moduleNames: ['ExceptionsManager'],
+      moduleName: 'ExceptionsManager',
     },
   },
 };
@@ -1506,7 +1568,7 @@ const CXX_ONLY_NATIVE_MODULES: SchemaType = {
   modules: {
     NativeSampleTurboModule: {
       type: 'NativeModule',
-      aliases: {
+      aliasMap: {
         ObjectAlias: {
           type: 'ObjectTypeAnnotation',
           properties: [
@@ -1516,6 +1578,57 @@ const CXX_ONLY_NATIVE_MODULES: SchemaType = {
               typeAnnotation: {
                 type: 'NumberTypeAnnotation',
               },
+            },
+          ],
+        },
+      },
+      enumMap: {
+        NumEnum: {
+          type: 'EnumDeclarationWithMembers',
+          name: 'NumEnum',
+          memberType: 'NumberTypeAnnotation',
+          members: [
+            {
+              name: 'ONE',
+              value: '1',
+            },
+            {
+              name: 'TWO',
+              value: '2',
+            },
+          ],
+        },
+        FloatEnum: {
+          type: 'EnumDeclarationWithMembers',
+          name: 'FloatEnum',
+          memberType: 'NumberTypeAnnotation',
+          members: [
+            {
+              name: 'POINT_ZERO',
+              value: '0.0',
+            },
+            {
+              name: 'POINT_ONE',
+              value: '0.1',
+            },
+            {
+              name: 'POINT_TWO',
+              value: '0.2',
+            },
+          ],
+        },
+        StringEnum: {
+          type: 'EnumDeclarationWithMembers',
+          name: 'StringEnum',
+          memberType: 'StringTypeAnnotation',
+          members: [
+            {
+              name: 'HELLO',
+              value: 'hello',
+            },
+            {
+              name: 'GoodBye',
+              value: 'goodbye',
             },
           ],
         },
@@ -1567,9 +1680,106 @@ const CXX_ONLY_NATIVE_MODULES: SchemaType = {
               ],
             },
           },
+          {
+            name: 'getEnums',
+            optional: false,
+            typeAnnotation: {
+              type: 'FunctionTypeAnnotation',
+              returnTypeAnnotation: {
+                type: 'StringTypeAnnotation',
+              },
+              params: [
+                {
+                  name: 'enumInt',
+                  optional: false,
+                  typeAnnotation: {
+                    name: 'NumEnum',
+                    type: 'EnumDeclaration',
+                    memberType: 'NumberTypeAnnotation',
+                  },
+                },
+                {
+                  name: 'enumFloat',
+                  optional: false,
+                  typeAnnotation: {
+                    name: 'FloatEnum',
+                    type: 'EnumDeclaration',
+                    memberType: 'NumberTypeAnnotation',
+                  },
+                },
+                {
+                  name: 'enumString',
+                  optional: false,
+                  typeAnnotation: {
+                    name: 'StringEnum',
+                    type: 'EnumDeclaration',
+                    memberType: 'StringTypeAnnotation',
+                  },
+                },
+              ],
+            },
+          },
+          {
+            name: 'getUnion',
+            optional: false,
+            typeAnnotation: {
+              type: 'FunctionTypeAnnotation',
+              returnTypeAnnotation: {
+                type: 'UnionTypeAnnotation',
+                memberType: 'ObjectTypeAnnotation',
+              },
+              params: [
+                {
+                  name: 'chooseInt',
+                  optional: false,
+                  typeAnnotation: {
+                    type: 'UnionTypeAnnotation',
+                    memberType: 'NumberTypeAnnotation',
+                  },
+                },
+                {
+                  name: 'chooseFloat',
+                  optional: false,
+                  typeAnnotation: {
+                    type: 'UnionTypeAnnotation',
+                    memberType: 'NumberTypeAnnotation',
+                  },
+                },
+                {
+                  name: 'chooseObject',
+                  optional: false,
+                  typeAnnotation: {
+                    type: 'UnionTypeAnnotation',
+                    memberType: 'ObjectTypeAnnotation',
+                  },
+                },
+                {
+                  name: 'chooseString',
+                  optional: false,
+                  typeAnnotation: {
+                    type: 'UnionTypeAnnotation',
+                    memberType: 'StringTypeAnnotation',
+                  },
+                },
+              ],
+            },
+          },
+          {
+            name: 'getEnumReturn',
+            optional: false,
+            typeAnnotation: {
+              type: 'FunctionTypeAnnotation',
+              returnTypeAnnotation: {
+                type: 'EnumDeclaration',
+                name: 'NumEnum',
+                memberType: 'NumberTypeAnnotation',
+              },
+              params: [],
+            },
+          },
         ],
       },
-      moduleNames: ['SampleTurboModuleCxx'],
+      moduleName: 'SampleTurboModuleCxx',
       excludedPlatforms: ['iOS', 'android'],
     },
   },
@@ -1579,11 +1789,12 @@ const SAMPLE_WITH_UPPERCASE_NAME: SchemaType = {
   modules: {
     NativeSampleTurboModule: {
       type: 'NativeModule',
-      aliases: {},
+      enumMap: {},
+      aliasMap: {},
       spec: {
         properties: [],
       },
-      moduleNames: ['SampleTurboModule'],
+      moduleName: 'SampleTurboModule',
     },
   },
 };

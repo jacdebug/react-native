@@ -1,4 +1,4 @@
-load("@fbsource//xplat/hermes/defs:hermes.bzl", "HERMES_BYTECODE_VERSION")
+load("@fbsource//tools/build_defs:glob_defs.bzl", "subdir_glob")
 load("//tools/build_defs:fb_native_wrapper.bzl", "fb_native")
 load("//tools/build_defs:fb_xplat_platform_specific_rule.bzl", "fb_xplat_platform_specific_rule")
 load("//tools/build_defs:fb_xplat_resource.bzl", "fb_xplat_resource")
@@ -10,15 +10,17 @@ load("//tools/build_defs/apple:flag_defs.bzl", "get_objc_arc_preprocessor_flags"
 load("//tools/build_defs/oss:metro_defs.bzl", "rn_library")
 load(
     "//tools/build_defs/oss:rn_defs.bzl",
+    "ANDROID",
     "APPLE",
     "YOGA_APPLE_TARGET",
-    "js_glob",
+    "js_library_glob",
     "make_resource_glob",
     "react_fabric_component_plugin_provider",
     "react_module_plugin_providers",
     "rn_apple_library",
+    "rn_apple_xplat_cxx_library",
     "rn_extra_build_flags",
-    "rn_xplat_cxx_library2",
+    "rn_xplat_cxx_library",
 )
 load("//tools/build_defs/third_party:yarn_defs.bzl", "yarn_workspace")
 
@@ -46,9 +48,10 @@ yarn_workspace(
 
 rn_library(
     name = "rn-tester",
-    srcs = js_glob(
+    srcs = js_library_glob(
         [
             "js",
+            "NativeCxxModuleExample",
             "NativeModuleExample",
             "NativeComponentExample",
             "RCTTest",
@@ -60,15 +63,18 @@ rn_library(
             "js/examples/WebSocket/websocket_test_server.js",
         ],
     ),
+    android_package_name = "com.facebook.fbreact.specs",
     codegen_components = True,
+    codegen_modules = True,
     labels = [
         "pfh:ReactNative_CommonInfrastructurePlaceholder",
-        "supermodule:xplat/default/public.react_native.playground",
     ],
     native_component_spec_name = "AppSpecs",
+    native_module_spec_name = "AppSpecs",
     skip_processors = True,
     visibility = ["PUBLIC"],
     deps = [
+        "//xplat/js:node_modules__flow_19enums_19runtime",
         "//xplat/js:node_modules__nullthrows",
         "//xplat/js/RKJSModules/Libraries/Core:Core",
         "//xplat/js/RKJSModules/vendor/react:react",
@@ -131,9 +137,7 @@ fb_apple_test(
         "QuartzCore",
         "UIKit",
     ],
-    preprocessor_flags = get_objc_arc_preprocessor_flags() + [
-        "-DHERMES_BYTECODE_VERSION={}".format(HERMES_BYTECODE_VERSION),
-    ] + get_preprocessor_flags_for_build_mode(),
+    preprocessor_flags = get_objc_arc_preprocessor_flags() + get_preprocessor_flags_for_build_mode(),
     visibility = [
         "//fbobjc/Libraries/FBReactKit:workspace",
     ],
@@ -166,6 +170,9 @@ fb_apple_test(
         "UIKit",
     ],
     info_plist = "//xplat/configurations/buck/common_info_plists:ApplicationTest-Info.plist",
+    # There are some flavor dependencies in the call chain that prevent this target from building correctly
+    # using Buck2
+    labels = ["opt-out-buck2-runs"],
     preprocessor_flags = get_objc_arc_preprocessor_flags() + get_preprocessor_flags_for_build_mode(),
     test_host_app = "//fbobjc/Configurations/Buck/CommonTestHost:CommonTestHost",
     visibility = [
@@ -176,7 +183,7 @@ fb_apple_test(
         ":RNTesterIntegrationTestsResourcesApple",
         ":RNTesterResourcesApple",
         "//xplat/js/react-native-github:RCTCxxBridgeApple",
-        "//xplat/js/react-native-github/React/CoreModules:CoreModulesApple",
+        "//xplat/js/react-native-github/packages/react-native/React/CoreModules:CoreModulesApple",
         rn_js_bundle_dep("//xplat/js/RKJSModules/EntryPoints:RNTesterTestBundle"),
     ],
 )
@@ -203,7 +210,7 @@ fb_xplat_resource(
     ],
 )
 
-rn_xplat_cxx_library2(
+rn_apple_xplat_cxx_library(
     name = "RNTesterBundleBinary",
     srcs = ["//xplat/configurations/buck/apple/common_files:dummy.c"],
     deps = [":RNTesterBundleAssetCatalog"],
@@ -279,12 +286,12 @@ rn_apple_library(
         "//xplat/js/react-native-github:RCTLinkingApple",
         "//xplat/js/react-native-github:RCTPushNotificationApple",
         "//xplat/js/react-native-github:ReactInternalApple",
-        "//xplat/js/react-native-github/React/CoreModules:CoreModulesApple",
+        "//xplat/js/react-native-github/packages/react-native/React/CoreModules:CoreModulesApple",
         YOGA_APPLE_TARGET,
     ],
 )
 
-rn_xplat_cxx_library2(
+rn_apple_xplat_cxx_library(
     name = "NativeComponentExample",
     plugins_only = True,
     srcs = glob(
@@ -308,7 +315,6 @@ rn_xplat_cxx_library2(
     contacts = ["oncall+react_native@xmail.facebook.com"],
     labels = [
         "pfh:ReactNative_CommonInfrastructurePlaceholder",
-        "supermodule:xplat/default/public.react_native.infra",
     ],
     plugins = [
         react_fabric_component_plugin_provider("RNTMyNativeView", "RNTMyNativeViewCls"),
@@ -319,5 +325,26 @@ rn_xplat_cxx_library2(
     deps = [
         ":generated_components-AppSpecs",
         "//xplat/js/react-native-github:RCTFabricComponentViewsBase",
+    ],
+)
+
+rn_xplat_cxx_library(
+    name = "NativeCxxModuleExample",
+    srcs = glob(["NativeCxxModuleExample/*.cpp"]),
+    header_namespace = "",
+    exported_headers = subdir_glob(
+        [
+            ("NativeCxxModuleExample", "*.h"),
+        ],
+        prefix = "NativeCxxModuleExample",
+    ),
+    fbandroid_compiler_flags = [
+        "-fexceptions",
+        "-frtti",
+    ],
+    platforms = (ANDROID, APPLE),
+    visibility = ["PUBLIC"],
+    deps = [
+        ":AppSpecsJSI",
     ],
 )

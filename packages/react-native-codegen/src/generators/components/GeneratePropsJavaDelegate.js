@@ -9,6 +9,7 @@
  */
 
 'use strict';
+import type {CommandParamTypeAnnotation} from '../../CodegenSchema';
 
 import type {
   NamedShape,
@@ -121,10 +122,14 @@ function getJavaValueForProp(
           return 'ColorPropConverter.getColor(value, view.getContext())';
         case 'ImageSourcePrimitive':
           return '(ReadableMap) value';
+        case 'ImageRequestPrimitive':
+          return '(ReadableMap) value';
         case 'PointPrimitive':
           return '(ReadableMap) value';
         case 'EdgeInsetsPrimitive':
           return '(ReadableMap) value';
+        case 'DimensionPrimitive':
+          return 'DimensionPropConverter.getDimension(value)';
         default:
           (typeAnnotation.name: empty);
           throw new Error('Received unknown ReservedPropTypeAnnotation');
@@ -139,6 +144,8 @@ function getJavaValueForProp(
       return '(String) value';
     case 'Int32EnumTypeAnnotation':
       return `value == null ? ${typeAnnotation.default} : ((Double) value).intValue()`;
+    case 'MixedTypeAnnotation':
+      return 'new DynamicFromObject(value)';
     default:
       (typeAnnotation: empty);
       throw new Error('Received invalid typeAnnotation');
@@ -170,7 +177,10 @@ function generatePropCasesString(
     }`;
 }
 
-function getCommandArgJavaType(param, index) {
+function getCommandArgJavaType(
+  param: NamedShape<CommandParamTypeAnnotation>,
+  index: number,
+) {
   const {typeAnnotation} = param;
 
   switch (typeAnnotation.type) {
@@ -229,7 +239,7 @@ function generateCommandCasesString(
   return commandMethods;
 }
 
-function getClassExtendString(component): string {
+function getClassExtendString(component: ComponentShape): string {
   const extendString = component.extendsProps
     .map(extendProps => {
       switch (extendProps.type) {
@@ -251,7 +261,7 @@ function getClassExtendString(component): string {
   return extendString;
 }
 
-function getDelegateImports(component) {
+function getDelegateImports(component: ComponentShape) {
   const imports = getImports(component, 'delegate');
   // The delegate needs ReadableArray for commands always.
   // The interface doesn't always need it
@@ -265,7 +275,10 @@ function getDelegateImports(component) {
   return imports;
 }
 
-function generateMethods(propsString, commandsString): string {
+function generateMethods(
+  propsString: string,
+  commandsString: null | string,
+): string {
   return [
     PropSetterTemplate({propCases: propsString}),
     commandsString != null
@@ -287,7 +300,7 @@ module.exports = {
     const normalizedPackageName = 'com.facebook.react.viewmanagers';
     const outputDir = `java/${normalizedPackageName.replace(/\./g, '/')}`;
 
-    const files = new Map();
+    const files = new Map<string, string>();
     Object.keys(schema.modules).forEach(moduleName => {
       const module = schema.modules[moduleName];
       if (module.type !== 'Component') {

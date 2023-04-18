@@ -526,6 +526,36 @@ const INSETS_PROP: SchemaType = {
   },
 };
 
+const DIMENSION_PROP: SchemaType = {
+  modules: {
+    CustomView: {
+      type: 'Component',
+      components: {
+        DimensionPropNativeComponent: {
+          extendsProps: [
+            {
+              type: 'ReactNativeBuiltInType',
+              knownTypeName: 'ReactNativeCoreViewProps',
+            },
+          ],
+          events: [],
+          props: [
+            {
+              name: 'marginBack',
+              optional: true,
+              typeAnnotation: {
+                type: 'ReservedPropTypeAnnotation',
+                name: 'DimensionPrimitive',
+              },
+            },
+          ],
+          commands: [],
+        },
+      },
+    },
+  },
+};
+
 const ARRAY_PROPS: SchemaType = {
   modules: {
     Slider: {
@@ -610,6 +640,17 @@ const ARRAY_PROPS: SchemaType = {
                 elementType: {
                   type: 'ReservedPropTypeAnnotation',
                   name: 'PointPrimitive',
+                },
+              },
+            },
+            {
+              name: 'dimensions',
+              optional: true,
+              typeAnnotation: {
+                type: 'ArrayTypeAnnotation',
+                elementType: {
+                  type: 'ReservedPropTypeAnnotation',
+                  name: 'DimensionPrimitive',
                 },
               },
             },
@@ -1072,6 +1113,35 @@ const INT32_ENUM_PROP: SchemaType = {
                 type: 'Int32EnumTypeAnnotation',
                 default: 0,
                 options: [0, 1, 2],
+              },
+            },
+          ],
+          commands: [],
+        },
+      },
+    },
+  },
+};
+
+const MIXED_PROP: SchemaType = {
+  modules: {
+    CustomView: {
+      type: 'Component',
+      components: {
+        MixedPropNativeComponent: {
+          extendsProps: [
+            {
+              type: 'ReactNativeBuiltInType',
+              knownTypeName: 'ReactNativeCoreViewProps',
+            },
+          ],
+          events: [],
+          props: [
+            {
+              name: 'mixedProp',
+              optional: false,
+              typeAnnotation: {
+                type: 'MixedTypeAnnotation',
               },
             },
           ],
@@ -1594,6 +1664,53 @@ const EXCLUDE_ANDROID_IOS: SchemaType = {
   },
 };
 
+const EXCLUDE_IOS_TWO_COMPONENTS_DIFFERENT_FILES: SchemaType = {
+  modules: {
+    ComponentFile1: {
+      type: 'Component',
+      components: {
+        ExcludedIosComponent: {
+          excludedPlatforms: ['iOS'],
+          extendsProps: [
+            {
+              type: 'ReactNativeBuiltInType',
+              knownTypeName: 'ReactNativeCoreViewProps',
+            },
+          ],
+          events: [],
+          props: [],
+          commands: [],
+        },
+      },
+    },
+    ComponentFile2: {
+      type: 'Component',
+      components: {
+        MultiFileIncludedNativeComponent: {
+          extendsProps: [
+            {
+              type: 'ReactNativeBuiltInType',
+              knownTypeName: 'ReactNativeCoreViewProps',
+            },
+          ],
+          events: [],
+          props: [
+            {
+              name: 'disabled',
+              optional: true,
+              typeAnnotation: {
+                type: 'BooleanTypeAnnotation',
+                default: true,
+              },
+            },
+          ],
+          commands: [],
+        },
+      },
+    },
+  },
+};
+
 module.exports = {
   NO_PROPS_NO_EVENTS,
   INTERFACE_ONLY,
@@ -1606,12 +1723,14 @@ module.exports = {
   IMAGE_PROP,
   POINT_PROP,
   INSETS_PROP,
+  DIMENSION_PROP,
   ARRAY_PROPS,
   ARRAY_PROPS_WITH_NESTED_OBJECT,
   OBJECT_PROPS,
   MULTI_NATIVE_PROP,
   STRING_ENUM_PROP,
   INT32_ENUM_PROP,
+  MIXED_PROP,
   EVENT_PROPS,
   EVENTS_WITH_PAPER_NAME,
   EVENT_NESTED_OBJECT_PROPS,
@@ -1621,4 +1740,5 @@ module.exports = {
   COMMANDS_AND_PROPS,
   EXCLUDE_ANDROID,
   EXCLUDE_ANDROID_IOS,
+  EXCLUDE_IOS_TWO_COMPONENTS_DIFFERENT_FILES,
 };

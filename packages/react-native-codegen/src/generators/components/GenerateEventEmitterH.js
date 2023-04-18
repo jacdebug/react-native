@@ -14,10 +14,9 @@ const nullthrows = require('nullthrows');
 
 const {
   getCppTypeForAnnotation,
-  toSafeCppString,
   generateEventStructName,
 } = require('./CppHelpers');
-const {indent} = require('../Utils');
+const {indent, toSafeCppString} = require('../Utils');
 
 import type {
   ComponentShape,
@@ -52,9 +51,7 @@ const FileTemplate = ({componentEmitters}: {componentEmitters: string}) => `
 
 namespace facebook {
 namespace react {
-
 ${componentEmitters}
-
 } // namespace react
 } // namespace facebook
 `;
@@ -135,7 +132,11 @@ function getNativeTypeFromAnnotation(
       throw new Error(`Received invalid event property type ${type}`);
   }
 }
-function generateEnum(structs, options, nameParts) {
+function generateEnum(
+  structs: StructsMap,
+  options: $ReadOnlyArray<string>,
+  nameParts: Array<string>,
+) {
   const structName = generateEventStructName(nameParts);
   const fields = options
     .map((option, index) => `${toSafeCppString(option)}`)
@@ -218,7 +219,10 @@ function generateStruct(
   );
 }
 
-function generateStructs(componentName: string, component): string {
+function generateStructs(
+  componentName: string,
+  component: ComponentShape,
+): string {
   const structs: StructsMap = new Map();
 
   component.events.forEach(event => {
@@ -244,7 +248,10 @@ function generateEvent(componentName: string, event: EventTypeShape): string {
 
   return `void ${event.name}() const;`;
 }
-function generateEvents(componentName: string, component): string {
+function generateEvents(
+  componentName: string,
+  component: ComponentShape,
+): string {
   return component.events
     .map(event => generateEvent(componentName, event))
     .join('\n\n' + '  ');
@@ -275,9 +282,7 @@ module.exports = {
       .filter(Boolean)
       .reduce((acc, components) => Object.assign(acc, components), {});
 
-    const moduleComponentsWithEvents = Object.keys(moduleComponents).filter(
-      componentName => moduleComponents[componentName].events.length > 0,
-    );
+    const moduleComponentsWithEvents = Object.keys(moduleComponents);
 
     const fileName = 'EventEmitters.h';
 

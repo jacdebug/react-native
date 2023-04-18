@@ -10,28 +10,31 @@ load(
 )
 load(
     "//tools/build_defs/oss:rn_defs.bzl",
-    "APPLETVOS",
-    "HERMES_BYTECODE_VERSION",
+    "ANDROID",
+    "APPLE",
     "IOS",
     "RCT_IMAGE_DATA_DECODER_SOCKET",
     "RCT_IMAGE_URL_LOADER_SOCKET",
     "RCT_URL_REQUEST_HANDLER_SOCKET",
     "YOGA_CXX_TARGET",
+    "fb_xplat_cxx_test",
     "get_react_native_ios_target_sdk_version",
+    "react_cxx_module_plugin_provider",
     "react_fabric_component_plugin_provider",
     "react_module_plugin_providers",
     "react_native_root_target",
     "react_native_xplat_dep",
     "react_native_xplat_target",
     "rn_apple_library",
+    "rn_apple_xplat_cxx_library",
     "rn_extra_build_flags",
-    "rn_xplat_cxx_library2",
+    "rn_xplat_cxx_library",
     "subdir_glob",
 )
 load("//tools/build_defs/third_party:yarn_defs.bzl", "yarn_workspace")
 
 RCTCXXBRIDGE_PUBLIC_HEADERS = {
-    "React/" + x: "React/CxxBridge/" + x
+    "React/" + x: "packages/react-native/React/CxxBridge/" + x
     for x in [
         "JSCExecutorFactory.h",
         "NSDataBigString.h",
@@ -45,8 +48,6 @@ fb_native.genrule(
     name = "codegen_rn_components_schema_rncore",
     srcs = glob(
         [
-            "Libraries/**/*NativeComponent.js",
-            "jest/**/*NativeComponent.js",
             "packages/**/*NativeComponent.js",
         ],
         exclude = [
@@ -58,9 +59,9 @@ fb_native.genrule(
     ) + [
         react_native_root_target("packages/rn-tester:nativecomponent-srcs"),
     ],
-    labels = ["uses_hg"],
-    cmd = "$(exe {}) $OUT $SRCS".format(react_native_root_target("packages/react-native-codegen:write_to_json")),
     out = "schema-rncore.json",
+    cmd = "$(exe {}) $OUT $SRCS".format(react_native_root_target("packages/react-native-codegen:write_to_json")),
+    labels = ["uses_hg"],
 )
 
 rn_codegen_components(
@@ -68,15 +69,15 @@ rn_codegen_components(
     schema_target = ":codegen_rn_components_schema_rncore",
 )
 
-rn_xplat_cxx_library2(
+rn_apple_xplat_cxx_library(
     name = "RCTCxxBridge",
     srcs = glob([
-        "React/CxxBridge/*.mm",
+        "packages/react-native/React/CxxBridge/*.mm",
     ]),
     headers = subdir_glob(
         [
             (
-                "React/CxxBridge",
+                "packages/react-native/React/CxxBridge",
                 "*.h",
             ),
         ],
@@ -99,7 +100,6 @@ rn_xplat_cxx_library2(
     labels = [
         "depslint_never_remove",
         "pfh:ReactNative_CommonInfrastructurePlaceholder",
-        "supermodule:xplat/default/public.react_native.infra",
     ],
     preprocessor_flags = get_objc_arc_preprocessor_flags() + get_preprocessor_flags_for_build_mode() + [
         "-DWITH_FBSYSTRACE=1",
@@ -111,18 +111,17 @@ rn_xplat_cxx_library2(
         ":RCTCxxUtils",
         ":ReactInternal",
         "//fbobjc/Libraries/FBReactKit:RCTFBSystrace",
-        "//xplat/folly:molly",
-        react_native_root_target("React/CoreModules:CoreModules"),
+        react_native_root_target("packages/react-native/React/CoreModules:CoreModules"),
         react_native_xplat_target("cxxreact:bridge"),
         react_native_xplat_target("cxxreact:jsbigstring"),
-        react_native_xplat_target("jsi:JSCRuntime"),
+        react_native_xplat_target("jsc:JSCRuntime"),
         react_native_xplat_target("jsiexecutor:jsiexecutor"),
         react_native_xplat_target("reactperflogger:reactperflogger"),
     ],
 )
 
 RCTCXXMODULE_PUBLIC_HEADERS = {
-    "React/" + x: "React/CxxModule/" + x
+    "React/" + x: "packages/react-native/React/CxxModule/" + x
     for x in [
         "RCTCxxMethod.h",
         "RCTCxxModule.h",
@@ -130,15 +129,15 @@ RCTCXXMODULE_PUBLIC_HEADERS = {
     ]
 }
 
-rn_xplat_cxx_library2(
+rn_apple_xplat_cxx_library(
     name = "RCTCxxModule",
     srcs = glob([
-        "React/CxxModule/*.mm",
+        "packages/react-native/React/CxxModule/*.mm",
     ]),
     headers = subdir_glob(
         [
             (
-                "React/CxxModule",
+                "packages/react-native/React/CxxModule",
                 "*.h",
             ),
         ],
@@ -157,7 +156,6 @@ rn_xplat_cxx_library2(
     ],
     labels = [
         "pfh:ReactNative_CommonInfrastructurePlaceholder",
-        "supermodule:xplat/default/public.react_native.infra",
     ],
     preprocessor_flags = get_objc_arc_preprocessor_flags() + get_preprocessor_flags_for_build_mode() + ["-DWITH_FBSYSTRACE=1"],
     visibility = ["PUBLIC"],
@@ -165,7 +163,6 @@ rn_xplat_cxx_library2(
         ":RCTCxxUtils",
         ":ReactInternal",
         "//xplat/fbsystrace:fbsystrace",
-        "//xplat/folly:headers_only_do_not_use",
         react_native_xplat_target("cxxreact:module"),
         react_native_xplat_target("cxxreact:bridge"),
         react_native_xplat_target("reactperflogger:reactperflogger"),
@@ -173,23 +170,23 @@ rn_xplat_cxx_library2(
     ],
 )
 
-rn_xplat_cxx_library2(
+rn_apple_xplat_cxx_library(
     name = "RCTCxxUtils",
     srcs = glob([
-        "React/CxxUtils/*.mm",
+        "packages/react-native/React/CxxUtils/*.mm",
     ]),
     header_namespace = "",
     exported_headers = subdir_glob(
         [
             (
-                "React/CxxUtils",
+                "packages/react-native/React/CxxUtils",
                 "*.h",
             ),
         ],
         exclude = RCTCXXMODULE_PUBLIC_HEADERS.values(),
         prefix = "React",
     ),
-    apple_sdks = (IOS, APPLETVOS),
+    apple_sdks = (IOS,),
     contacts = ["oncall+react_native@xmail.facebook.com"],
     fbobjc_enable_exceptions = True,
     frameworks = [
@@ -197,25 +194,24 @@ rn_xplat_cxx_library2(
     ],
     labels = [
         "pfh:ReactNative_CommonInfrastructurePlaceholder",
-        "supermodule:xplat/default/public.react_native.infra",
     ],
     preprocessor_flags = get_objc_arc_preprocessor_flags() + get_preprocessor_flags_for_build_mode(),
     visibility = ["PUBLIC"],
     deps = [
-        "//xplat/folly:molly",
+        "//xplat/folly:dynamic",
     ],
 )
 
-rn_xplat_cxx_library2(
+rn_apple_xplat_cxx_library(
     name = "RCTCxxLogUtils",
     srcs = glob([
-        "React/CxxLogUtils/*.mm",
+        "packages/react-native/React/CxxLogUtils/*.mm",
     ]),
     header_namespace = "",
     exported_headers = subdir_glob(
         [
             (
-                "React/CxxLogUtils",
+                "packages/react-native/React/CxxLogUtils",
                 "*.h",
             ),
         ],
@@ -225,7 +221,6 @@ rn_xplat_cxx_library2(
     fbobjc_enable_exceptions = True,
     labels = [
         "pfh:ReactNative_CommonInfrastructurePlaceholder",
-        "supermodule:xplat/default/public.react_native.infra",
     ],
     preprocessor_flags = get_objc_arc_preprocessor_flags() + get_preprocessor_flags_for_build_mode(),
     visibility = ["PUBLIC"],
@@ -235,28 +230,31 @@ rn_xplat_cxx_library2(
     ],
 )
 
-RCTLIB_PATH = "Libraries/"
+RCTLIB_PATH = "packages/react-native/Libraries/"
 
-RCTBASE_PATH = "React/Base/"
+RCTBASE_PATH = "packages/react-native/React/Base/"
 
-RCTDEVSUPPORT_PATH = "React/DevSupport/"
+RCTDEVSUPPORT_PATH = "packages/react-native/React/DevSupport/"
 
-RCTMODULES_PATH = "React/Modules/"
+RCTMODULES_PATH = "packages/react-native/React/Modules/"
 
-RCTVIEWS_PATH = "React/Views/"
+RCTVIEWS_PATH = "packages/react-native/React/Views/"
 
 REACT_PUBLIC_HEADERS = {
     "React/RCTAnimationType.h": RCTVIEWS_PATH + "RCTAnimationType.h",
     "React/RCTAssert.h": RCTBASE_PATH + "RCTAssert.h",
     "React/RCTAutoInsetsProtocol.h": RCTVIEWS_PATH + "RCTAutoInsetsProtocol.h",
+    "React/RCTBorderCurve.h": RCTVIEWS_PATH + "RCTBorderCurve.h",
     "React/RCTBorderDrawing.h": RCTVIEWS_PATH + "RCTBorderDrawing.h",
     "React/RCTBorderStyle.h": RCTVIEWS_PATH + "RCTBorderStyle.h",
     "React/RCTBridge+Private.h": RCTBASE_PATH + "RCTBridge+Private.h",
     "React/RCTBridge.h": RCTBASE_PATH + "RCTBridge.h",
+    "React/RCTBridgeConstants.h": RCTBASE_PATH + "RCTBridgeConstants.h",
     "React/RCTBridgeDelegate.h": RCTBASE_PATH + "RCTBridgeDelegate.h",
     "React/RCTBridgeMethod.h": RCTBASE_PATH + "RCTBridgeMethod.h",
     "React/RCTBridgeModule.h": RCTBASE_PATH + "RCTBridgeModule.h",
     "React/RCTBridgeModuleDecorator.h": RCTBASE_PATH + "RCTBridgeModuleDecorator.h",
+    "React/RCTBundleManager.h": RCTBASE_PATH + "RCTBundleManager.h",
     "React/RCTBundleURLProvider.h": RCTBASE_PATH + "RCTBundleURLProvider.h",
     "React/RCTComponent.h": RCTVIEWS_PATH + "RCTComponent.h",
     "React/RCTComponentData.h": RCTVIEWS_PATH + "RCTComponentData.h",
@@ -268,6 +266,7 @@ REACT_PUBLIC_HEADERS = {
     "React/RCTDevLoadingViewProtocol.h": RCTDEVSUPPORT_PATH + "RCTDevLoadingViewProtocol.h",
     "React/RCTDevLoadingViewSetEnabled.h": RCTDEVSUPPORT_PATH + "RCTDevLoadingViewSetEnabled.h",
     "React/RCTDisplayLink.h": RCTBASE_PATH + "RCTDisplayLink.h",
+    "React/RCTDynamicTypeRamp.h": RCTLIB_PATH + "Text/Text/RCTDynamicTypeRamp.h",
     "React/RCTErrorCustomizer.h": RCTBASE_PATH + "RCTErrorCustomizer.h",
     "React/RCTErrorInfo.h": RCTBASE_PATH + "RCTErrorInfo.h",
     # NOTE: RCTEventDispatcher.h is exported from CoreModules:CoreModulesApple
@@ -278,9 +277,9 @@ REACT_PUBLIC_HEADERS = {
     "React/RCTI18nUtil.h": RCTMODULES_PATH + "RCTI18nUtil.h",
     "React/RCTImageSource.h": RCTBASE_PATH + "RCTImageSource.h",
     "React/RCTInitializing.h": RCTBASE_PATH + "RCTInitializing.h",
-    "React/RCTInspector.h": "React/Inspector/RCTInspector.h",
+    "React/RCTInspector.h": "packages/react-native/React/Inspector/RCTInspector.h",
     "React/RCTInspectorDevServerHelper.h": RCTDEVSUPPORT_PATH + "RCTInspectorDevServerHelper.h",
-    "React/RCTInspectorPackagerConnection.h": "React/Inspector/RCTInspectorPackagerConnection.h",
+    "React/RCTInspectorPackagerConnection.h": "packages/react-native/React/Inspector/RCTInspectorPackagerConnection.h",
     "React/RCTInvalidating.h": RCTBASE_PATH + "RCTInvalidating.h",
     "React/RCTJSScriptLoaderModule.h": RCTBASE_PATH + "RCTJSScriptLoaderModule.h",
     "React/RCTJSStackFrame.h": RCTBASE_PATH + "RCTJSStackFrame.h",
@@ -307,7 +306,7 @@ REACT_PUBLIC_HEADERS = {
     "React/RCTPerformanceLogger.h": RCTBASE_PATH + "RCTPerformanceLogger.h",
     "React/RCTPerformanceLoggerLabels.h": RCTBASE_PATH + "RCTPerformanceLoggerLabels.h",
     "React/RCTPointerEvents.h": RCTVIEWS_PATH + "RCTPointerEvents.h",
-    "React/RCTProfile.h": "React/Profiler/RCTProfile.h",
+    "React/RCTProfile.h": "packages/react-native/React/Profiler/RCTProfile.h",
     "React/RCTPushNotificationManager.h": RCTLIB_PATH + "PushNotificationIOS/RCTPushNotificationManager.h",
     "React/RCTReconnectingWebSocket.h": RCTLIB_PATH + "WebSocket/RCTReconnectingWebSocket.h",
     "React/RCTRedBoxExtraDataViewController.h": RCTMODULES_PATH + "RCTRedBoxExtraDataViewController.h",
@@ -318,7 +317,6 @@ REACT_PUBLIC_HEADERS = {
     "React/RCTRootShadowView.h": RCTVIEWS_PATH + "RCTRootShadowView.h",
     "React/RCTRootView.h": RCTBASE_PATH + "RCTRootView.h",
     "React/RCTRootViewDelegate.h": RCTBASE_PATH + "RCTRootViewDelegate.h",
-    "React/RCTSRWebSocket.h": RCTLIB_PATH + "WebSocket/RCTSRWebSocket.h",
     "React/RCTScrollEvent.h": RCTVIEWS_PATH + "ScrollView/RCTScrollEvent.h",
     "React/RCTScrollView.h": RCTVIEWS_PATH + "ScrollView/RCTScrollView.h",
     "React/RCTScrollableProtocol.h": RCTVIEWS_PATH + "ScrollView/RCTScrollableProtocol.h",
@@ -339,10 +337,11 @@ REACT_PUBLIC_HEADERS = {
     "React/RCTSurfaceView.h": RCTBASE_PATH + "Surface/RCTSurfaceView.h",
     "React/RCTTextDecorationLineType.h": RCTVIEWS_PATH + "RCTTextDecorationLineType.h",
     "React/RCTTouchHandler.h": RCTBASE_PATH + "RCTTouchHandler.h",
+    "React/RCTTurboModuleRegistry.h": RCTBASE_PATH + "RCTTurboModuleRegistry.h",
     "React/RCTUIManager.h": RCTMODULES_PATH + "RCTUIManager.h",
     "React/RCTUIManagerObserverCoordinator.h": RCTMODULES_PATH + "RCTUIManagerObserverCoordinator.h",
     "React/RCTUIManagerUtils.h": RCTMODULES_PATH + "RCTUIManagerUtils.h",
-    "React/RCTUIUtils.h": "React/UIUtils/RCTUIUtils.h",
+    "React/RCTUIUtils.h": "packages/react-native/React/UIUtils/RCTUIUtils.h",
     "React/RCTURLRequestDelegate.h": RCTBASE_PATH + "RCTURLRequestDelegate.h",
     "React/RCTURLRequestHandler.h": RCTBASE_PATH + "RCTURLRequestHandler.h",
     "React/RCTUtils.h": RCTBASE_PATH + "RCTUtils.h",
@@ -351,50 +350,49 @@ REACT_PUBLIC_HEADERS = {
     "React/RCTView.h": RCTVIEWS_PATH + "RCTView.h",
     "React/RCTViewManager.h": RCTVIEWS_PATH + "RCTViewManager.h",
     "React/RCTViewUtils.h": RCTVIEWS_PATH + "RCTViewUtils.h",
-    "React/RCTWeakProxy.h": RCTBASE_PATH + "RCTWeakProxy.h",
     "React/RCTWrapperViewController.h": RCTVIEWS_PATH + "RCTWrapperViewController.h",
     "React/UIView+React.h": RCTVIEWS_PATH + "UIView+React.h",
 }
 
 REACT_COMPONENTVIEWS_BASE_FILES = [
-    "React/Fabric/Mounting/ComponentViews/Image/*.mm",
-    "React/Fabric/RCTImageResponseObserverProxy.mm",
-    "React/Fabric/Mounting/ComponentViews/View/RCTViewComponentView.mm",
+    "packages/react-native/React/Fabric/Mounting/ComponentViews/Image/*.mm",
+    "packages/react-native/React/Fabric/RCTImageResponseObserverProxy.mm",
+    "packages/react-native/React/Fabric/Mounting/ComponentViews/View/RCTViewComponentView.mm",
 ]
 
-rn_xplat_cxx_library2(
+rn_apple_xplat_cxx_library(
     name = "ReactInternal",
     srcs = glob(
         [
-            "React/Base/**/*.m",
-            "React/Base/**/*.mm",
-            "React/DevSupport/**/*.m",
-            "React/DevSupport/**/*.mm",
-            "React/Inspector/**/*.m",
-            "React/Inspector/**/*.mm",
-            "React/Modules/**/*.m",
-            "React/Modules/**/*.mm",
-            "React/Profiler/**/*.m",
-            "React/Profiler/**/*.mm",
-            "React/Profiler/**/*.S",
-            "React/UIUtils/*.m",
-            "React/Views/**/*.m",
-            "React/Views/**/*.mm",
-            "Libraries/ActionSheetIOS/*.m",
-            "Libraries/WebSocket/*.m",
+            "packages/react-native/React/Base/**/*.m",
+            "packages/react-native/React/Base/**/*.mm",
+            "packages/react-native/React/DevSupport/**/*.m",
+            "packages/react-native/React/DevSupport/**/*.mm",
+            "packages/react-native/React/Inspector/**/*.m",
+            "packages/react-native/React/Inspector/**/*.mm",
+            "packages/react-native/React/Modules/**/*.m",
+            "packages/react-native/React/Modules/**/*.mm",
+            "packages/react-native/React/Profiler/**/*.m",
+            "packages/react-native/React/Profiler/**/*.mm",
+            "packages/react-native/React/Profiler/**/*.S",
+            "packages/react-native/React/UIUtils/*.m",
+            "packages/react-native/React/Views/**/*.m",
+            "packages/react-native/React/Views/**/*.mm",
+            "packages/react-native/Libraries/ActionSheetIOS/*.m",
+            "packages/react-native/Libraries/WebSocket/*.m",
         ],
     ),
     headers = glob(
         [
-            "React/Base/**/*.h",
-            "React/DevSupport/**/*.h",
-            "React/Inspector/**/*.h",
-            "React/Modules/**/*.h",
-            "React/Profiler/**/*.h",
-            "React/Views/**/*.h",
-            "React/UIUtils/**/*.h",
-            "Libraries/ActionSheetIOS/*.h",
-            "Libraries/WebSocket/*.h",
+            "packages/react-native/React/Base/**/*.h",
+            "packages/react-native/React/DevSupport/**/*.h",
+            "packages/react-native/React/Inspector/**/*.h",
+            "packages/react-native/React/Modules/**/*.h",
+            "packages/react-native/React/Profiler/**/*.h",
+            "packages/react-native/React/Views/**/*.h",
+            "packages/react-native/React/UIUtils/**/*.h",
+            "packages/react-native/Libraries/ActionSheetIOS/*.h",
+            "packages/react-native/Libraries/WebSocket/*.h",
         ],
     ),
     header_namespace = "",
@@ -405,12 +403,6 @@ rn_xplat_cxx_library2(
         "-Wno-global-constructors",
     ],
     contacts = ["oncall+react_native@xmail.facebook.com"],
-    exported_linker_flags = [
-        "-weak_framework",
-        "UserNotifications",
-        "-weak_framework",
-        "WebKit",
-    ],
     exported_preprocessor_flags = rn_extra_build_flags(),
     fbobjc_enable_exceptions = True,
     frameworks = [
@@ -425,20 +417,18 @@ rn_xplat_cxx_library2(
         "$SDKROOT/System/Library/Frameworks/SystemConfiguration.framework",
         "$SDKROOT/System/Library/Frameworks/UIKit.framework",
         "$SDKROOT/System/Library/Frameworks/UserNotifications.framework",
+        "$SDKROOT/System/Library/Frameworks/WebKit.framework",
     ],
     labels = [
         "depslint_never_add",
         "depslint_never_remove",  # Some old NativeModule still relies on +load unfortunately.
         "pfh:ReactNative_CommonInfrastructurePlaceholder",
-        "supermodule:xplat/default/public.react_native.infra",
     ],
     platform_preprocessor_flags = [(
         "linux",
         ["-D PIC_MODIFIER=@PLT"],
     )],
-    preprocessor_flags = get_objc_arc_preprocessor_flags() + get_preprocessor_flags_for_build_mode() + [
-        "-DHERMES_BYTECODE_VERSION={}".format(HERMES_BYTECODE_VERSION),
-    ] + rn_extra_build_flags(),
+    preprocessor_flags = get_objc_arc_preprocessor_flags() + get_preprocessor_flags_for_build_mode() + rn_extra_build_flags(),
     visibility = [
         "//fbobjc/Apps/Internal/SparkLabs/...",
         "//fbobjc/Apps/Internal/Venice/...",
@@ -450,58 +440,59 @@ rn_xplat_cxx_library2(
         "//fbobjc/Libraries/RCTPrerendering/...",
         "//fbobjc/VendorLib/react-native-maps:react-native-maps",
         "//xplat/js:",
-        "//xplat/js/react-native-github/React/...",
-        "//xplat/js/react-native-github/ReactCommon/react/nativemodule/core:",
-        "//xplat/js/react-native-github/ReactCommon/react/nativemodule/samples:",
+        "//xplat/js/react-native-github/packages/react-native/React/...",
+        "//xplat/js/react-native-github/packages/react-native/ReactCommon/react/nativemodule/core:",
+        "//xplat/js/react-native-github/packages/react-native/ReactCommon/react/nativemodule/samples:",
         "//xplat/js/react-native-github/packages/rn-tester:",
         "//xplat/rtc/manul/...",
     ],
     deps = [
         YOGA_CXX_TARGET,
+        "//fbobjc/VendorLib/SocketRocket:SocketRocket",
         react_native_xplat_target("cxxreact:bridge"),
         react_native_xplat_target("reactperflogger:reactperflogger"),
     ],
 )
 
-rn_xplat_cxx_library2(
+rn_apple_xplat_cxx_library(
     name = "RCTFabric",
     srcs = glob(
         [
-            "React/Fabric/**/*.cpp",
-            "React/Fabric/**/*.m",
-            "React/Fabric/**/*.mm",
+            "packages/react-native/React/Fabric/**/*.cpp",
+            "packages/react-native/React/Fabric/**/*.m",
+            "packages/react-native/React/Fabric/**/*.mm",
         ],
         exclude = glob(REACT_COMPONENTVIEWS_BASE_FILES),
     ),
     headers = glob(
         [
-            "React/Fabric/**/*.h",
+            "packages/react-native/React/Fabric/**/*.h",
         ],
     ),
     header_namespace = "",
     exported_headers = {
-        "React/RCTComponentViewDescriptor.h": "React/Fabric/Mounting/RCTComponentViewDescriptor.h",
-        "React/RCTComponentViewFactory.h": "React/Fabric/Mounting/RCTComponentViewFactory.h",
-        "React/RCTComponentViewRegistry.h": "React/Fabric/Mounting/RCTComponentViewRegistry.h",
-        "React/RCTFabricSurface.h": "React/Fabric/Surface/RCTFabricSurface.h",
-        "React/RCTFabricSurfaceHostingProxyRootView.h": "React/Fabric/Surface/RCTFabricSurfaceHostingProxyRootView.h",
-        "React/RCTGenericDelegateSplitter.h": "React/Fabric/Utils/RCTGenericDelegateSplitter.h",
-        "React/RCTLegacyViewManagerInteropComponentView.h": "React/Fabric/Mounting/ComponentViews/LegacyViewManagerInterop/RCTLegacyViewManagerInteropComponentView.h",
-        "React/RCTLocalizationProvider.h": "React/Fabric/RCTLocalizationProvider.h",
-        "React/RCTModalHostViewComponentView.h": "React/Fabric/Mounting/ComponentViews/Modal/RCTModalHostViewComponentView.h",
-        "React/RCTMountingManager.h": "React/Fabric/Mounting/RCTMountingManager.h",
-        "React/RCTMountingManagerDelegate.h": "React/Fabric/Mounting/RCTMountingManagerDelegate.h",
-        "React/RCTMountingTransactionObserving.h": "React/Fabric/Mounting/RCTMountingTransactionObserving.h",
-        "React/RCTParagraphComponentAccessibilityProvider.h": "React/Fabric/Mounting/ComponentViews/Text/RCTParagraphComponentAccessibilityProvider.h",
-        "React/RCTParagraphComponentView.h": "React/Fabric/Mounting/ComponentViews/Text/RCTParagraphComponentView.h",
-        "React/RCTPrimitives.h": "React/Fabric/RCTPrimitives.h",
-        "React/RCTRootComponentView.h": "React/Fabric/Mounting/ComponentViews/Root/RCTRootComponentView.h",
-        "React/RCTScheduler.h": "React/Fabric/RCTScheduler.h",
-        "React/RCTScrollViewComponentView.h": "React/Fabric/Mounting/ComponentViews/ScrollView/RCTScrollViewComponentView.h",
-        "React/RCTSurfacePresenter.h": "React/Fabric/RCTSurfacePresenter.h",
-        "React/RCTSurfacePresenterBridgeAdapter.h": "React/Fabric/RCTSurfacePresenterBridgeAdapter.h",
-        "React/RCTSurfaceRegistry.h": "React/Fabric/RCTSurfaceRegistry.h",
-        "React/RCTSurfaceTouchHandler.h": "React/Fabric/RCTSurfaceTouchHandler.h",
+        "React/RCTComponentViewDescriptor.h": "packages/react-native/React/Fabric/Mounting/RCTComponentViewDescriptor.h",
+        "React/RCTComponentViewFactory.h": "packages/react-native/React/Fabric/Mounting/RCTComponentViewFactory.h",
+        "React/RCTComponentViewRegistry.h": "packages/react-native/React/Fabric/Mounting/RCTComponentViewRegistry.h",
+        "React/RCTFabricSurface.h": "packages/react-native/React/Fabric/Surface/RCTFabricSurface.h",
+        "React/RCTFabricSurfaceHostingProxyRootView.h": "packages/react-native/React/Fabric/Surface/RCTFabricSurfaceHostingProxyRootView.h",
+        "React/RCTGenericDelegateSplitter.h": "packages/react-native/React/Fabric/Utils/RCTGenericDelegateSplitter.h",
+        "React/RCTLegacyViewManagerInteropComponentView.h": "packages/react-native/React/Fabric/Mounting/ComponentViews/LegacyViewManagerInterop/RCTLegacyViewManagerInteropComponentView.h",
+        "React/RCTLocalizationProvider.h": "packages/react-native/React/Fabric/RCTLocalizationProvider.h",
+        "React/RCTModalHostViewComponentView.h": "packages/react-native/React/Fabric/Mounting/ComponentViews/Modal/RCTModalHostViewComponentView.h",
+        "React/RCTMountingManager.h": "packages/react-native/React/Fabric/Mounting/RCTMountingManager.h",
+        "React/RCTMountingManagerDelegate.h": "packages/react-native/React/Fabric/Mounting/RCTMountingManagerDelegate.h",
+        "React/RCTMountingTransactionObserving.h": "packages/react-native/React/Fabric/Mounting/RCTMountingTransactionObserving.h",
+        "React/RCTParagraphComponentAccessibilityProvider.h": "packages/react-native/React/Fabric/Mounting/ComponentViews/Text/RCTParagraphComponentAccessibilityProvider.h",
+        "React/RCTParagraphComponentView.h": "packages/react-native/React/Fabric/Mounting/ComponentViews/Text/RCTParagraphComponentView.h",
+        "React/RCTPrimitives.h": "packages/react-native/React/Fabric/RCTPrimitives.h",
+        "React/RCTRootComponentView.h": "packages/react-native/React/Fabric/Mounting/ComponentViews/Root/RCTRootComponentView.h",
+        "React/RCTScheduler.h": "packages/react-native/React/Fabric/RCTScheduler.h",
+        "React/RCTScrollViewComponentView.h": "packages/react-native/React/Fabric/Mounting/ComponentViews/ScrollView/RCTScrollViewComponentView.h",
+        "React/RCTSurfacePresenter.h": "packages/react-native/React/Fabric/RCTSurfacePresenter.h",
+        "React/RCTSurfacePresenterBridgeAdapter.h": "packages/react-native/React/Fabric/RCTSurfacePresenterBridgeAdapter.h",
+        "React/RCTSurfaceRegistry.h": "packages/react-native/React/Fabric/RCTSurfaceRegistry.h",
+        "React/RCTSurfaceTouchHandler.h": "packages/react-native/React/Fabric/RCTSurfaceTouchHandler.h",
     },
     compiler_flags = [
         "-fexceptions",
@@ -521,14 +512,12 @@ rn_xplat_cxx_library2(
     labels = [
         "disable_plugins_only_validation",
         "pfh:ReactNative_CommonInfrastructurePlaceholder",
-        "supermodule:xplat/default/public.react_native.infra",
     ],
     plugins = [
         react_fabric_component_plugin_provider("SafeAreaView", "RCTSafeAreaViewCls"),
         react_fabric_component_plugin_provider("ScrollView", "RCTScrollViewCls"),
         react_fabric_component_plugin_provider("PullToRefreshView", "RCTPullToRefreshViewCls"),
         react_fabric_component_plugin_provider("ActivityIndicatorView", "RCTActivityIndicatorViewCls"),
-        react_fabric_component_plugin_provider("Slider", "RCTSliderCls"),
         react_fabric_component_plugin_provider("Switch", "RCTSwitchCls"),
         react_fabric_component_plugin_provider("UnimplementedNativeView", "RCTUnimplementedNativeViewCls"),
         react_fabric_component_plugin_provider("Paragraph", "RCTParagraphCls"),
@@ -569,7 +558,6 @@ rn_xplat_cxx_library2(
     exported_deps = [
         react_native_xplat_target("react/renderer/animations:animations"),
         react_native_xplat_target("react/renderer/components/scrollview:scrollview"),
-        react_native_xplat_target("react/renderer/components/slider:slider"),
         react_native_xplat_target("react/renderer/components/safeareaview:safeareaview"),
         react_native_xplat_target("react/renderer/components/modal:modal"),
         react_native_xplat_target("react/renderer/components/unimplementedview:unimplementedview"),
@@ -588,31 +576,33 @@ rn_xplat_cxx_library2(
 rn_apple_library(
     name = "RCTTypeSafety",
     srcs = glob([
-        "Libraries/TypeSafety/**/*.mm",
+        "packages/react-native/Libraries/TypeSafety/**/*.mm",
     ]),
     exported_headers = glob(
         [
-            "Libraries/TypeSafety/**/*.h",
+            "packages/react-native/Libraries/TypeSafety/**/*.h",
         ],
     ),
     autoglob = False,
     complete_nullability = True,
     contacts = ["oncall+react_native@xmail.facebook.com"],
+    disable_infer_precompiled_header = True,
     extension_api_only = True,
     frameworks = [
-        "$PLATFORM_DIR/Developer/Library/Frameworks/Foundation.framework",
+        "Foundation",
     ],
     inherited_buck_flags = get_static_library_ios_flags(),
     labels = [
+        "fbios_link_group:xplat/default/public.react_native.infra",
         "pfh:ReactNative_CommonInfrastructurePlaceholder",
-        "supermodule:xplat/default/public.react_native.infra",
+        "talkios_link_group:xplat/default/public.react_native.infra",
     ],
     preprocessor_flags = get_objc_arc_preprocessor_flags() + get_preprocessor_flags_for_build_mode(),
     reexport_all_header_dependencies = True,
     deps = [
         ":ReactInternalApple",
         "//xplat/folly:optionalApple",
-        "//xplat/js/react-native-github/Libraries/FBLazyVector:FBLazyVector",
+        "//xplat/js/react-native-github/packages/react-native/Libraries/FBLazyVector:FBLazyVector",
     ],
 )
 
@@ -626,7 +616,7 @@ yarn_workspace(
 
 fb_apple_test(
     name = "TextTestsApple",
-    srcs = ["React/Tests/Text/RCTParagraphComponentViewTests.mm"],
+    srcs = ["packages/react-native/React/Tests/Text/RCTParagraphComponentViewTests.mm"],
     frameworks = [
         "$PLATFORM_DIR/Developer/Library/Frameworks/XCTest.framework",
     ],
@@ -636,20 +626,20 @@ fb_apple_test(
         react_native_xplat_target("react/renderer/element:elementApple"),
         "//xplat/js/react-native-github:RCTFabricComponentViewsBaseApple",
         "//xplat/js/react-native-github:RCTTextApple",
-        "//xplat/js/react-native-github/ReactCommon/react/renderer/attributedstring:attributedstringApple",
-        "//xplat/js/react-native-github/ReactCommon/react/renderer/componentregistry:componentregistryApple",
-        "//xplat/js/react-native-github/ReactCommon/react/renderer/components/legacyviewmanagerinterop:legacyviewmanagerinteropApple",
-        "//xplat/js/react-native-github/ReactCommon/react/renderer/components/text:textApple",
-        "//xplat/js/react-native-github/ReactCommon/react/renderer/components/textinput/iostextinput:iostextinputApple",
-        "//xplat/js/react-native-github/ReactCommon/react/renderer/scheduler:schedulerApple",
-        "//xplat/js/react-native-github/ReactCommon/react/renderer/textlayoutmanager:textlayoutmanagerApple",
-        "//xplat/js/react-native-github/ReactCommon/runtimeexecutor:runtimeexecutorApple",
+        "//xplat/js/react-native-github/packages/react-native/ReactCommon/react/renderer/attributedstring:attributedstringApple",
+        "//xplat/js/react-native-github/packages/react-native/ReactCommon/react/renderer/componentregistry:componentregistryApple",
+        "//xplat/js/react-native-github/packages/react-native/ReactCommon/react/renderer/components/legacyviewmanagerinterop:legacyviewmanagerinteropApple",
+        "//xplat/js/react-native-github/packages/react-native/ReactCommon/react/renderer/components/text:textApple",
+        "//xplat/js/react-native-github/packages/react-native/ReactCommon/react/renderer/components/textinput/iostextinput:iostextinputApple",
+        "//xplat/js/react-native-github/packages/react-native/ReactCommon/react/renderer/scheduler:schedulerApple",
+        "//xplat/js/react-native-github/packages/react-native/ReactCommon/react/renderer/textlayoutmanager:textlayoutmanagerApple",
+        "//xplat/js/react-native-github/packages/react-native/ReactCommon/runtimeexecutor:runtimeexecutorApple",
     ],
 )
 
 fb_apple_test(
     name = "MountingTestsApple",
-    srcs = ["React/Tests/Mounting/RCTComponentViewRegistryTests.mm"],
+    srcs = ["packages/react-native/React/Tests/Mounting/RCTComponentViewRegistryTests.mm"],
     frameworks = [
         "$PLATFORM_DIR/Developer/Library/Frameworks/XCTest.framework",
     ],
@@ -659,13 +649,13 @@ fb_apple_test(
         ":RCTFabricApple",
         "//xplat/js/react-native-github:RCTFabricComponentViewsBaseApple",
         "//xplat/js/react-native-github:RCTTextApple",
-        "//xplat/js/react-native-github/ReactCommon/react/renderer/attributedstring:attributedstringApple",
-        "//xplat/js/react-native-github/ReactCommon/react/renderer/componentregistry:componentregistryApple",
-        "//xplat/js/react-native-github/ReactCommon/react/renderer/components/legacyviewmanagerinterop:legacyviewmanagerinteropApple",
-        "//xplat/js/react-native-github/ReactCommon/react/renderer/components/textinput/iostextinput:iostextinputApple",
-        "//xplat/js/react-native-github/ReactCommon/react/renderer/scheduler:schedulerApple",
-        "//xplat/js/react-native-github/ReactCommon/react/renderer/textlayoutmanager:textlayoutmanagerApple",
-        "//xplat/js/react-native-github/ReactCommon/runtimeexecutor:runtimeexecutorApple",
+        "//xplat/js/react-native-github/packages/react-native/ReactCommon/react/renderer/attributedstring:attributedstringApple",
+        "//xplat/js/react-native-github/packages/react-native/ReactCommon/react/renderer/componentregistry:componentregistryApple",
+        "//xplat/js/react-native-github/packages/react-native/ReactCommon/react/renderer/components/legacyviewmanagerinterop:legacyviewmanagerinteropApple",
+        "//xplat/js/react-native-github/packages/react-native/ReactCommon/react/renderer/components/textinput/iostextinput:iostextinputApple",
+        "//xplat/js/react-native-github/packages/react-native/ReactCommon/react/renderer/scheduler:schedulerApple",
+        "//xplat/js/react-native-github/packages/react-native/ReactCommon/react/renderer/textlayoutmanager:textlayoutmanagerApple",
+        "//xplat/js/react-native-github/packages/react-native/ReactCommon/runtimeexecutor:runtimeexecutorApple",
     ],
 )
 
@@ -677,7 +667,6 @@ rn_apple_library(
     labels = [
         "disable_plugins_only_validation",
         "pfh:ReactNative_CommonInfrastructurePlaceholder",
-        "supermodule:xplat/default/public.react_native.infra",
     ],
     plugins = [react_fabric_component_plugin_provider("Image", "RCTImageCls")],
     visibility = ["PUBLIC"],
@@ -691,25 +680,24 @@ rn_apple_library(
 # Ideally, each component view gets its own target, and each target uses react_fabric_component_plugin_provider.
 # For each component, an app can import the base component view, or an app-specific subclass.
 # i.e. Apps depend on "ImageView" target for RCTImageComponentView.h, and "FBReactImageView" target for FBReactImageComponentView.h
-rn_xplat_cxx_library2(
+rn_apple_xplat_cxx_library(
     name = "RCTFabricComponentViewsBase",
     srcs = glob(REACT_COMPONENTVIEWS_BASE_FILES),
     header_namespace = "",
     exported_headers = {
-        "React/RCTComponentViewProtocol.h": "React/Fabric/Mounting/RCTComponentViewProtocol.h",
-        "React/RCTConversions.h": "React/Fabric/RCTConversions.h",
-        "React/RCTImageComponentView.h": "React/Fabric/Mounting/ComponentViews/Image/RCTImageComponentView.h",
-        "React/RCTImageResponseDelegate.h": "React/Fabric/RCTImageResponseDelegate.h",
-        "React/RCTImageResponseObserverProxy.h": "React/Fabric/RCTImageResponseObserverProxy.h",
-        "React/RCTTouchableComponentViewProtocol.h": "React/Fabric/RCTTouchableComponentViewProtocol.h",
-        "React/RCTViewComponentView.h": "React/Fabric/Mounting/ComponentViews/View/RCTViewComponentView.h",
-        "React/UIView+ComponentViewProtocol.h": "React/Fabric/Mounting/UIView+ComponentViewProtocol.h",
+        "React/RCTComponentViewProtocol.h": "packages/react-native/React/Fabric/Mounting/RCTComponentViewProtocol.h",
+        "React/RCTConversions.h": "packages/react-native/React/Fabric/RCTConversions.h",
+        "React/RCTImageComponentView.h": "packages/react-native/React/Fabric/Mounting/ComponentViews/Image/RCTImageComponentView.h",
+        "React/RCTImageResponseDelegate.h": "packages/react-native/React/Fabric/RCTImageResponseDelegate.h",
+        "React/RCTImageResponseObserverProxy.h": "packages/react-native/React/Fabric/RCTImageResponseObserverProxy.h",
+        "React/RCTTouchableComponentViewProtocol.h": "packages/react-native/React/Fabric/RCTTouchableComponentViewProtocol.h",
+        "React/RCTViewComponentView.h": "packages/react-native/React/Fabric/Mounting/ComponentViews/View/RCTViewComponentView.h",
+        "React/UIView+ComponentViewProtocol.h": "packages/react-native/React/Fabric/Mounting/UIView+ComponentViewProtocol.h",
     },
     compiler_flags = ["-Wall"],
     contacts = ["oncall+react_native@xmail.facebook.com"],
     labels = [
         "pfh:ReactNative_CommonInfrastructurePlaceholder",
-        "supermodule:xplat/default/public.react_native.infra",
     ],
     visibility = ["PUBLIC"],
     deps = [
@@ -725,31 +713,34 @@ rn_xplat_cxx_library2(
 rn_library(
     name = "react-native",
     srcs = [
-        "package.json",
-        "index.js",
+        "packages/react-native/package.json",
+        "packages/react-native/index.js",
     ] + glob(
         [
-            "Libraries/**/*.js",
-            "Libraries/NewAppScreen/**/*.png",
-            "Libraries/LogBox/**/*.png",
+            "packages/react-native/Libraries/**/*.js",
+            "packages/react-native/Libraries/NewAppScreen/**/*.png",
+            "packages/react-native/Libraries/LogBox/**/*.png",
+            "packages/virtualized-lists/**/*.js",
+            "packages/virtualized-lists/**/*.json",
         ],
         exclude = [
             "**/__*__/**",
             "**/gulpfile.js",
-            "Libraries/Components/Switch/SwitchSchema.js",
+            "packages/react-native/Libraries/Components/Switch/SwitchSchema.js",
             "**/*._reactvr.js",
         ],
     ),
     labels = [
         "pfh:ReactNative_CommonInfrastructurePlaceholder",
-        "supermodule:xplat/default/public.react_native.core",
     ],
     visibility = ["PUBLIC"],
     deps = [
         "//xplat/js:node_modules__abort_19controller",
         "//xplat/js:node_modules__anser",
         "//xplat/js:node_modules__base64_19js",
+        "//xplat/js:node_modules__deprecated_19react_19native_19prop_19types",
         "//xplat/js:node_modules__event_19target_19shim",
+        "//xplat/js:node_modules__flow_19enums_19runtime",
         "//xplat/js:node_modules__invariant",
         "//xplat/js:node_modules__memoize_19one",
         "//xplat/js:node_modules__nullthrows",
@@ -760,9 +751,9 @@ rn_library(
         "//xplat/js:node_modules__react_19shallow_19renderer",
         "//xplat/js:node_modules__regenerator_19runtime",
         "//xplat/js:node_modules__stacktrace_19parser",
-        "//xplat/js:node_modules__use_19sync_19external_19store",
         "//xplat/js:node_modules__whatwg_19fetch",
         "//xplat/js/RKJSModules/Libraries/Polyfills:Polyfills",
+        "//xplat/js/RKJSModules/Libraries/React:React",
         "//xplat/js/RKJSModules/vendor/react:react",
         "//xplat/js/RKJSModules/vendor/react-test-renderer:react-test-renderer",
         "//xplat/js/RKJSModules/vendor/scheduler:scheduler",
@@ -778,44 +769,42 @@ rn_codegen(
     name = "FBReactNativeSpec",
     android_package_name = "com.facebook.fbreact.specs",
     codegen_modules = True,
+    codegen_src_prefix = "packages/react-native/Libraries/",
     ios_assume_nonnull = False,
     library_labels = [
-        "supermodule:xplat/default/public.react_native.infra",
         "pfh:ReactNative_CommonInfrastructurePlaceholder",
     ],
     native_module_spec_name = "FBReactNativeSpec",
-    src_prefix = "Libraries/",
 )
 
 # TODO: Merge this into FBReactNativeSpec
 rn_codegen(
     name = "FBReactNativeComponentSpec",
     codegen_components = True,
+    codegen_src_prefix = "packages/react-native/Libraries/",
     ios_assume_nonnull = False,
     library_labels = [
-        "supermodule:xplat/default/public.react_native.infra",
         "pfh:ReactNative_CommonInfrastructurePlaceholder",
     ],
-    src_prefix = "Libraries/",
 )
 
 rn_apple_library(
     name = "RCTAnimationApple",
     srcs = glob([
-        "Libraries/NativeAnimation/**/*.m",
-        "Libraries/NativeAnimation/**/*.mm",
+        "packages/react-native/Libraries/NativeAnimation/**/*.m",
+        "packages/react-native/Libraries/NativeAnimation/**/*.mm",
     ]),
     headers = glob(
         [
-            "Libraries/NativeAnimation/**/*.h",
+            "packages/react-native/Libraries/NativeAnimation/**/*.h",
         ],
     ),
     header_namespace = "",
     exported_headers = glob(
         [
-            "Libraries/NativeAnimation/*.h",
-            "Libraries/NativeAnimation/Drivers/*.h",
-            "Libraries/NativeAnimation/Nodes/*.h",
+            "packages/react-native/Libraries/NativeAnimation/*.h",
+            "packages/react-native/Libraries/NativeAnimation/Drivers/*.h",
+            "packages/react-native/Libraries/NativeAnimation/Nodes/*.h",
         ],
     ),
     autoglob = False,
@@ -829,8 +818,9 @@ rn_apple_library(
         "depslint_never_remove",  # Some old NativeModule still relies on +load unfortunately.
         "disable_plugins_only_validation",
         "extension_api_allow_unsafe_unavailable_usages",
+        "fbios_link_group:xplat/default/public.react_native.infra",
         "pfh:ReactNative_CommonInfrastructurePlaceholder",
-        "supermodule:xplat/default/public.react_native.infra",
+        "talkios_link_group:xplat/default/public.react_native.infra",
     ],
     plugins =
         react_module_plugin_providers(
@@ -856,17 +846,17 @@ rn_apple_library(
 rn_apple_library(
     name = "RCTBlobApple",
     srcs = glob([
-        "Libraries/Blob/*.m",
-        "Libraries/Blob/*.mm",
+        "packages/react-native/Libraries/Blob/*.m",
+        "packages/react-native/Libraries/Blob/*.mm",
     ]),
     headers = glob(
         [
-            "Libraries/Blob/*.h",
+            "packages/react-native/Libraries/Blob/*.h",
         ],
     ),
     exported_headers = glob(
         [
-            "Libraries/Blob/*.h",
+            "packages/react-native/Libraries/Blob/*.h",
         ],
     ),
     autoglob = False,
@@ -879,8 +869,8 @@ rn_apple_library(
     labels = [
         "depslint_never_remove",  # Some old NativeModule still relies on +load unfortunately.
         "disable_plugins_only_validation",
+        "fbios_link_group:xplat/default/public.react_native.infra",
         "pfh:ReactNative_CommonInfrastructurePlaceholder",
-        "supermodule:xplat/default/public.react_native.infra",
     ],
     plugins =
         react_module_plugin_providers(
@@ -906,7 +896,7 @@ rn_apple_library(
         "//xplat/js/react-native-github:RCTLinkingApple",
         "//xplat/js/react-native-github:RCTPushNotificationApple",
         "//xplat/js/react-native-github:ReactInternalApple",
-        "//xplat/js/react-native-github/React/CoreModules:CoreModulesApple",
+        "//xplat/js/react-native-github/packages/react-native/React/CoreModules:CoreModulesApple",
         "//xplat/jsi:jsiApple",
     ],
 )
@@ -914,17 +904,17 @@ rn_apple_library(
 rn_apple_library(
     name = "RCTLinkingApple",
     srcs = glob([
-        "Libraries/LinkingIOS/*.m",
-        "Libraries/LinkingIOS/*.mm",
+        "packages/react-native/Libraries/LinkingIOS/*.m",
+        "packages/react-native/Libraries/LinkingIOS/*.mm",
     ]),
     headers = glob(
         [
-            "Libraries/LinkingIOS/*.h",
+            "packages/react-native/Libraries/LinkingIOS/*.h",
         ],
     ),
     exported_headers = glob(
         [
-            "Libraries/LinkingIOS/*.h",
+            "packages/react-native/Libraries/LinkingIOS/*.h",
         ],
     ),
     autoglob = False,
@@ -938,8 +928,9 @@ rn_apple_library(
         "depslint_never_remove",  # Some old NativeModule still relies on +load unfortunately.
         "disable_plugins_only_validation",
         "extension_api_allow_unsafe_unavailable_usages",
+        "fbios_link_group:xplat/default/public.react_native.infra",
         "pfh:ReactNative_CommonInfrastructurePlaceholder",
-        "supermodule:xplat/default/public.react_native.infra",
+        "talkios_link_group:xplat/default/public.react_native.infra",
     ],
     plugins =
         react_module_plugin_providers(
@@ -962,17 +953,17 @@ rn_apple_library(
 rn_apple_library(
     name = "RCTPushNotificationApple",
     srcs = glob([
-        "Libraries/PushNotificationIOS/*.m",
-        "Libraries/PushNotificationIOS/*.mm",
+        "packages/react-native/Libraries/PushNotificationIOS/*.m",
+        "packages/react-native/Libraries/PushNotificationIOS/*.mm",
     ]),
     headers = glob(
         [
-            "Libraries/PushNotificationIOS/*.h",
+            "packages/react-native/Libraries/PushNotificationIOS/*.h",
         ],
     ),
     exported_headers = glob(
         [
-            "Libraries/PushNotificationIOS/*.h",
+            "packages/react-native/Libraries/PushNotificationIOS/*.h",
         ],
     ),
     autoglob = False,
@@ -986,8 +977,9 @@ rn_apple_library(
         "depslint_never_remove",  # Some old NativeModule still relies on +load unfortunately.
         "disable_plugins_only_validation",
         "extension_api_allow_unsafe_unavailable_usages",
+        "fbios_link_group:xplat/default/public.react_native.infra",
         "pfh:ReactNative_CommonInfrastructurePlaceholder",
-        "supermodule:xplat/default/public.react_native.infra",
+        "talkios_link_group:xplat/default/public.react_native.infra",
     ],
     plugins =
         react_module_plugin_providers(
@@ -1009,17 +1001,17 @@ rn_apple_library(
 rn_apple_library(
     name = "RCTImageApple",
     srcs = glob([
-        "Libraries/Image/*.m",
-        "Libraries/Image/*.mm",
+        "packages/react-native/Libraries/Image/*.m",
+        "packages/react-native/Libraries/Image/*.mm",
     ]),
     headers = glob(
         [
-            "Libraries/Image/*.h",
+            "packages/react-native/Libraries/Image/*.h",
         ],
     ),
     exported_headers = glob(
         [
-            "Libraries/Image/*.h",
+            "packages/react-native/Libraries/Image/*.h",
         ],
     ),
     autoglob = False,
@@ -1038,8 +1030,9 @@ rn_apple_library(
         "depslint_never_remove",  # Some old NativeModule still relies on +load unfortunately.
         "disable_plugins_only_validation",
         "extension_api_allow_unsafe_unavailable_usages",
+        "fbios_link_group:xplat/default/public.react_native.infra",
         "pfh:ReactNative_CommonInfrastructurePlaceholder",
-        "supermodule:xplat/default/public.react_native.infra",
+        "talkios_link_group:xplat/default/public.react_native.infra",
     ],
     plugins =
         react_module_plugin_providers(
@@ -1090,19 +1083,19 @@ rn_apple_library(
 )
 
 RCTNETWORK_PUBLIC_HEADERS = [
-    "Libraries/Network/RCTNetworkTask.h",
-    "Libraries/Network/RCTNetworking.h",
+    "packages/react-native/Libraries/Network/RCTNetworkTask.h",
+    "packages/react-native/Libraries/Network/RCTNetworking.h",
 ]
 
 rn_apple_library(
     name = "RCTNetworkApple",
     srcs = glob([
-        "Libraries/Network/*.m",
-        "Libraries/Network/*.mm",
+        "packages/react-native/Libraries/Network/*.m",
+        "packages/react-native/Libraries/Network/*.mm",
     ]),
     headers = glob(
         [
-            "Libraries/Network/*.h",
+            "packages/react-native/Libraries/Network/*.h",
         ],
         exclude = RCTNETWORK_PUBLIC_HEADERS,
     ),
@@ -1119,8 +1112,9 @@ rn_apple_library(
         "depslint_never_remove",  # Some old NativeModule still relies on +load unfortunately.
         "disable_plugins_only_validation",
         "extension_api_allow_unsafe_unavailable_usages",
+        "fbios_link_group:xplat/default/public.react_native.infra",
         "pfh:ReactNative_CommonInfrastructurePlaceholder",
-        "supermodule:xplat/default/public.react_native.infra",
+        "talkios_link_group:xplat/default/public.react_native.infra",
     ],
     plugins =
         react_module_plugin_providers(
@@ -1165,15 +1159,16 @@ rn_apple_library(
 rn_apple_library(
     name = "RCTSettingsApple",
     srcs = glob([
-        "Libraries/Settings/*.m",
-        "Libraries/Settings/*.mm",
+        "packages/react-native/Libraries/Settings/*.m",
+        "packages/react-native/Libraries/Settings/*.mm",
     ]),
     exported_headers = glob(
         [
-            "Libraries/Settings/*.h",
+            "packages/react-native/Libraries/Settings/*.h",
         ],
     ),
     autoglob = False,
+    extension_api_only = True,
     frameworks = [
         "Foundation",
     ],
@@ -1199,50 +1194,50 @@ rn_apple_library(
     ],
 )
 
-rn_xplat_cxx_library2(
+rn_apple_xplat_cxx_library(
     name = "RCTText",
     srcs = glob([
-        "Libraries/Text/**/*.m",
-        "Libraries/Text/**/*.mm",
+        "packages/react-native/Libraries/Text/**/*.m",
+        "packages/react-native/Libraries/Text/**/*.mm",
     ]),
     headers = glob(
         [
-            "Libraries/Text/**/*.h",
+            "packages/react-native/Libraries/Text/**/*.h",
         ],
     ),
     header_namespace = "",
     exported_headers = subdir_glob(
         [
             (
-                "Libraries/Text",
+                "packages/react-native/Libraries/Text",
                 "*.h",
             ),
             (
-                "Libraries/Text/BaseText",
+                "packages/react-native/Libraries/Text/BaseText",
                 "*.h",
             ),
             (
-                "Libraries/Text/RawText",
+                "packages/react-native/Libraries/Text/RawText",
                 "*.h",
             ),
             (
-                "Libraries/Text/Text",
+                "packages/react-native/Libraries/Text/Text",
                 "*.h",
             ),
             (
-                "Libraries/Text/TextInput",
+                "packages/react-native/Libraries/Text/TextInput",
                 "*.h",
             ),
             (
-                "Libraries/Text/TextInput/Multiline",
+                "packages/react-native/Libraries/Text/TextInput/Multiline",
                 "*.h",
             ),
             (
-                "Libraries/Text/TextInput/Singleline",
+                "packages/react-native/Libraries/Text/TextInput/Singleline",
                 "*.h",
             ),
             (
-                "Libraries/Text/VirtualText",
+                "packages/react-native/Libraries/Text/VirtualText",
                 "*.h",
             ),
         ],
@@ -1254,7 +1249,6 @@ rn_xplat_cxx_library2(
     labels = [
         "depslint_never_remove",  # Some old NativeModule still relies on +load unfortunately.
         "pfh:ReactNative_CommonInfrastructurePlaceholder",
-        "supermodule:xplat/default/public.react_native.infra",
     ],
     preprocessor_flags = get_objc_arc_preprocessor_flags() + get_preprocessor_flags_for_build_mode(),
     visibility = ["PUBLIC"],
@@ -1269,12 +1263,12 @@ rn_xplat_cxx_library2(
 rn_apple_library(
     name = "RCTVibrationApple",
     srcs = glob([
-        "Libraries/Vibration/**/*.m",
-        "Libraries/Vibration/**/*.mm",
+        "packages/react-native/Libraries/Vibration/**/*.m",
+        "packages/react-native/Libraries/Vibration/**/*.mm",
     ]),
     exported_headers = glob(
         [
-            "Libraries/Vibration/*.h",
+            "packages/react-native/Libraries/Vibration/*.h",
         ],
     ),
     autoglob = False,
@@ -1286,8 +1280,8 @@ rn_apple_library(
     labels = [
         "depslint_never_remove",
         "disable_plugins_only_validation",
+        "fbios_link_group:xplat/default/public.react_native.infra",
         "pfh:ReactNative_CommonInfrastructurePlaceholder",
-        "supermodule:xplat/default/public.react_native.infra",
     ],
     plugins = react_module_plugin_providers(
         name = "Vibration",
@@ -1306,17 +1300,17 @@ rn_apple_library(
     ],
 )
 
-rn_xplat_cxx_library2(
+rn_apple_xplat_cxx_library(
     name = "RCTWrapper",
     srcs = glob([
-        "Libraries/Wrapper/*.m",
-        "Libraries/Wrapper/*.mm",
+        "packages/react-native/Libraries/Wrapper/*.m",
+        "packages/react-native/Libraries/Wrapper/*.mm",
     ]),
     header_namespace = "",
     exported_headers = subdir_glob(
         [
             (
-                "Libraries/Wrapper",
+                "packages/react-native/Libraries/Wrapper",
                 "*.h",
             ),
         ],
@@ -1328,7 +1322,6 @@ rn_xplat_cxx_library2(
     labels = [
         "depslint_never_remove",  # Some old NativeModule still relies on +load unfortunately.
         "pfh:ReactNative_CommonInfrastructurePlaceholder",
-        "supermodule:xplat/default/public.react_native.infra",
     ],
     preprocessor_flags = get_objc_arc_preprocessor_flags() + get_preprocessor_flags_for_build_mode(),
     visibility = ["PUBLIC"],
@@ -1339,17 +1332,17 @@ rn_xplat_cxx_library2(
     ],
 )
 
-rn_xplat_cxx_library2(
+rn_apple_xplat_cxx_library(
     name = "RCTWrapperExample",
     srcs = glob([
-        "Libraries/Wrapper/Example/*.m",
-        "Libraries/Wrapper/Example/*.mm",
+        "packages/react-native/Libraries/Wrapper/Example/*.m",
+        "packages/react-native/Libraries/Wrapper/Example/*.mm",
     ]),
     header_namespace = "",
     exported_headers = subdir_glob(
         [
             (
-                "Libraries/Wrapper/Example",
+                "packages/react-native/Libraries/Wrapper/Example",
                 "*.h",
             ),
         ],
@@ -1361,7 +1354,6 @@ rn_xplat_cxx_library2(
     labels = [
         "depslint_never_remove",
         "pfh:ReactNative_CommonInfrastructurePlaceholder",
-        "supermodule:xplat/default/public.react_native.infra",
     ],
     preprocessor_flags = get_objc_arc_preprocessor_flags() + get_preprocessor_flags_for_build_mode(),
     visibility = ["PUBLIC"],
@@ -1373,17 +1365,17 @@ rn_xplat_cxx_library2(
     ],
 )
 
-rn_xplat_cxx_library2(
+rn_apple_xplat_cxx_library(
     name = "RCTSurfaceHostingComponent",
     srcs = glob([
-        "Libraries/SurfaceHostingComponent/**/*.m",
-        "Libraries/SurfaceHostingComponent/**/*.mm",
+        "packages/react-native/Libraries/SurfaceHostingComponent/**/*.m",
+        "packages/react-native/Libraries/SurfaceHostingComponent/**/*.mm",
     ]),
     header_namespace = "",
     exported_headers = subdir_glob(
         [
             (
-                "Libraries/SurfaceHostingComponent",
+                "packages/react-native/Libraries/SurfaceHostingComponent",
                 "*.h",
             ),
         ],
@@ -1396,7 +1388,6 @@ rn_xplat_cxx_library2(
     labels = [
         "depslint_never_remove",
         "pfh:ReactNative_CommonInfrastructurePlaceholder",
-        "supermodule:xplat/default/public.react_native.infra",
     ],
     preprocessor_flags = get_objc_arc_preprocessor_flags() + get_preprocessor_flags_for_build_mode(),
     visibility = ["PUBLIC"],
@@ -1409,17 +1400,17 @@ rn_xplat_cxx_library2(
     ],
 )
 
-rn_xplat_cxx_library2(
+rn_apple_xplat_cxx_library(
     name = "RCTSurfaceBackedComponent",
     srcs = glob([
-        "Libraries/SurfaceBackedComponent/**/*.m",
-        "Libraries/SurfaceBackedComponent/**/*.mm",
+        "packages/react-native/Libraries/SurfaceBackedComponent/**/*.m",
+        "packages/react-native/Libraries/SurfaceBackedComponent/**/*.mm",
     ]),
     header_namespace = "",
     exported_headers = subdir_glob(
         [
             (
-                "Libraries/SurfaceBackedComponent",
+                "packages/react-native/Libraries/SurfaceBackedComponent",
                 "*.h",
             ),
         ],
@@ -1432,7 +1423,6 @@ rn_xplat_cxx_library2(
     labels = [
         "depslint_never_remove",
         "pfh:ReactNative_CommonInfrastructurePlaceholder",
-        "supermodule:xplat/default/public.react_native.infra",
     ],
     preprocessor_flags = get_objc_arc_preprocessor_flags() + get_preprocessor_flags_for_build_mode(),
     visibility = ["PUBLIC"],
@@ -1446,7 +1436,7 @@ rn_xplat_cxx_library2(
     ],
 )
 
-rn_xplat_cxx_library2(
+rn_apple_xplat_cxx_library(
     name = "RCTMapView_RNHeader",
     header_namespace = "",
     exported_headers = {
@@ -1454,10 +1444,68 @@ rn_xplat_cxx_library2(
     },
     labels = [
         "pfh:ReactNative_CommonInfrastructurePlaceholder",
-        "supermodule:xplat/default/public.react_native.infra",
     ],
     visibility = [
         "//fbobjc/Libraries/FBReactKit:RCTMapView",
         "//fbobjc/VendorLib/react-native-maps:react-native-maps",
+    ],
+)
+
+rn_xplat_cxx_library(
+    name = "RCTWebPerformance",
+    srcs = glob(
+        [
+            "packages/react-native/Libraries/WebPerformance/**/*.cpp",
+        ],
+        exclude = ["packages/react-native/Libraries/WebPerformance/__tests__/*"],
+    ),
+    header_namespace = "",
+    exported_headers = subdir_glob(
+        [("packages/react-native/Libraries/WebPerformance", "*.h")],
+        prefix = "RCTWebPerformance",
+    ),
+    compiler_flags_enable_exceptions = True,
+    compiler_flags_enable_rtti = True,
+    labels = [
+        "depslint_never_remove",
+        "pfh:ReactNative_CommonInfrastructurePlaceholder",
+    ],
+    platforms = (ANDROID, APPLE),
+    plugins = [
+        react_cxx_module_plugin_provider(
+            name = "NativePerformanceCxx",
+            function = "NativePerformanceModuleProvider",
+        ),
+        react_cxx_module_plugin_provider(
+            name = "NativePerformanceObserverCxx",
+            function = "NativePerformanceObserverModuleProvider",
+        ),
+    ],
+    visibility = ["PUBLIC"],
+    deps = [
+        ":FBReactNativeSpecJSI",
+        react_native_xplat_target("react/renderer/core:core"),
+        react_native_xplat_target("cxxreact:bridge"),
+    ],
+)
+
+fb_xplat_cxx_test(
+    name = "RCTWebPerformance_tests",
+    srcs = glob([
+        "packages/react-native/Libraries/WebPerformance/__tests__/*.cpp",
+    ]),
+    headers = glob(["packages/react-native/Libraries/WebPerformance/__tests__/*.h"]),
+    header_namespace = "",
+    compiler_flags = [
+        "-fexceptions",
+        "-frtti",
+        "-std=c++17",
+        "-Wall",
+    ],
+    platforms = (ANDROID, APPLE),
+    deps = [
+        ":RCTWebPerformance",
+        "//xplat/third-party/gmock:gmock",
+        "//xplat/third-party/gmock:gtest",
     ],
 )

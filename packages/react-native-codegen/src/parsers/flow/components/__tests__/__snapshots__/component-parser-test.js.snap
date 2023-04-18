@@ -24,7 +24,7 @@ exports[`RN Codegen Flow Parser Fails with error message PROP_ARRAY_MIXED_ENUM 1
 
 exports[`RN Codegen Flow Parser Fails with error message PROP_ENUM_BOOLEAN 1`] = `"Unsupported union type for \\"someProp\\", received \\"BooleanLiteralTypeAnnotation\\""`;
 
-exports[`RN Codegen Flow Parser Fails with error message PROP_MIXED_ENUM 1`] = `"Mixed types are not supported (see \\"someProp\\")"`;
+exports[`RN Codegen Flow Parser Fails with error message PROP_MIXED_ENUM 1`] = `"Mixed types are not supported (see \\"someProp\\")."`;
 
 exports[`RN Codegen Flow Parser Fails with error message PROP_NUMBER_TYPE 1`] = `"Cannot use \\"NumberTypeAnnotation\\" type annotation for \\"someProp\\": must use a specific numeric type like Int32, Double, or Float"`;
 
@@ -539,6 +539,52 @@ exports[`RN Codegen Flow Parser can generate fixture ALL_PROP_TYPES_NO_EVENTS 1`
                 'type': 'ReservedPropTypeAnnotation',
                 'name': 'EdgeInsetsPrimitive'
               }
+            },
+            {
+              'name': 'dimension_required',
+              'optional': false,
+              'typeAnnotation': {
+                'type': 'ReservedPropTypeAnnotation',
+                'name': 'DimensionPrimitive'
+              }
+            },
+            {
+              'name': 'dimension_optional_key',
+              'optional': true,
+              'typeAnnotation': {
+                'type': 'ReservedPropTypeAnnotation',
+                'name': 'DimensionPrimitive'
+              }
+            },
+            {
+              'name': 'dimension_optional_value',
+              'optional': true,
+              'typeAnnotation': {
+                'type': 'ReservedPropTypeAnnotation',
+                'name': 'DimensionPrimitive'
+              }
+            },
+            {
+              'name': 'dimension_optional_both',
+              'optional': true,
+              'typeAnnotation': {
+                'type': 'ReservedPropTypeAnnotation',
+                'name': 'DimensionPrimitive'
+              }
+            },
+            {
+              'name': 'mixed_required',
+              'optional': false,
+              'typeAnnotation': {
+                'type': 'MixedTypeAnnotation'
+              }
+            },
+            {
+              'name': 'mixed_optional_key',
+              'optional': true,
+              'typeAnnotation': {
+                'type': 'MixedTypeAnnotation'
+              }
             }
           ],
           'commands': []
@@ -971,6 +1017,50 @@ exports[`RN Codegen Flow Parser can generate fixture ARRAY_PROP_TYPES_NO_EVENTS 
               }
             },
             {
+              'name': 'array_dimension_required',
+              'optional': false,
+              'typeAnnotation': {
+                'type': 'ArrayTypeAnnotation',
+                'elementType': {
+                  'type': 'ReservedPropTypeAnnotation',
+                  'name': 'DimensionPrimitive'
+                }
+              }
+            },
+            {
+              'name': 'array_dimension_optional_key',
+              'optional': true,
+              'typeAnnotation': {
+                'type': 'ArrayTypeAnnotation',
+                'elementType': {
+                  'type': 'ReservedPropTypeAnnotation',
+                  'name': 'DimensionPrimitive'
+                }
+              }
+            },
+            {
+              'name': 'array_dimension_optional_value',
+              'optional': true,
+              'typeAnnotation': {
+                'type': 'ArrayTypeAnnotation',
+                'elementType': {
+                  'type': 'ReservedPropTypeAnnotation',
+                  'name': 'DimensionPrimitive'
+                }
+              }
+            },
+            {
+              'name': 'array_dimension_optional_both',
+              'optional': true,
+              'typeAnnotation': {
+                'type': 'ArrayTypeAnnotation',
+                'elementType': {
+                  'type': 'ReservedPropTypeAnnotation',
+                  'name': 'DimensionPrimitive'
+                }
+              }
+            },
+            {
               'name': 'array_object_required',
               'optional': false,
               'typeAnnotation': {
@@ -1256,7 +1346,117 @@ exports[`RN Codegen Flow Parser can generate fixture ARRAY_PROP_TYPES_NO_EVENTS 
 }"
 `;
 
-exports[`RN Codegen Flow Parser can generate fixture COMMANDS_AND_EVENTS_TYPES_EXPORTED 1`] = `
+exports[`RN Codegen Flow Parser can generate fixture COMMANDS_DEFINED_WITH_ALL_TYPES 1`] = `
+"{
+  'modules': {
+    'Module': {
+      'type': 'Component',
+      'components': {
+        'Module': {
+          'extendsProps': [
+            {
+              'type': 'ReactNativeBuiltInType',
+              'knownTypeName': 'ReactNativeCoreViewProps'
+            }
+          ],
+          'events': [],
+          'props': [],
+          'commands': [
+            {
+              'name': 'handleRootTag',
+              'optional': false,
+              'typeAnnotation': {
+                'type': 'FunctionTypeAnnotation',
+                'params': [
+                  {
+                    'name': 'rootTag',
+                    'optional': false,
+                    'typeAnnotation': {
+                      'type': 'ReservedTypeAnnotation',
+                      'name': 'RootTag'
+                    }
+                  }
+                ],
+                'returnTypeAnnotation': {
+                  'type': 'VoidTypeAnnotation'
+                }
+              }
+            },
+            {
+              'name': 'hotspotUpdate',
+              'optional': false,
+              'typeAnnotation': {
+                'type': 'FunctionTypeAnnotation',
+                'params': [
+                  {
+                    'name': 'x',
+                    'optional': false,
+                    'typeAnnotation': {
+                      'type': 'Int32TypeAnnotation'
+                    }
+                  },
+                  {
+                    'name': 'y',
+                    'optional': false,
+                    'typeAnnotation': {
+                      'type': 'Int32TypeAnnotation'
+                    }
+                  }
+                ],
+                'returnTypeAnnotation': {
+                  'type': 'VoidTypeAnnotation'
+                }
+              }
+            },
+            {
+              'name': 'scrollTo',
+              'optional': false,
+              'typeAnnotation': {
+                'type': 'FunctionTypeAnnotation',
+                'params': [
+                  {
+                    'name': 'x',
+                    'optional': false,
+                    'typeAnnotation': {
+                      'type': 'FloatTypeAnnotation'
+                    }
+                  },
+                  {
+                    'name': 'y',
+                    'optional': false,
+                    'typeAnnotation': {
+                      'type': 'Int32TypeAnnotation'
+                    }
+                  },
+                  {
+                    'name': 'z',
+                    'optional': false,
+                    'typeAnnotation': {
+                      'type': 'DoubleTypeAnnotation'
+                    }
+                  },
+                  {
+                    'name': 'animated',
+                    'optional': false,
+                    'typeAnnotation': {
+                      'type': 'BooleanTypeAnnotation'
+                    }
+                  }
+                ],
+                'returnTypeAnnotation': {
+                  'type': 'VoidTypeAnnotation'
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}"
+`;
+
+exports[`RN Codegen Flow Parser can generate fixture COMMANDS_EVENTS_TYPES_EXPORTED 1`] = `
 "{
   'modules': {
     'Module': {
@@ -2795,115 +2995,14 @@ exports[`RN Codegen Flow Parser can generate fixture COMMANDS_AND_EVENTS_TYPES_E
                 'params': [
                   {
                     'name': 'y',
+                    'optional': false,
                     'typeAnnotation': {
                       'type': 'Int32TypeAnnotation'
                     }
                   },
                   {
                     'name': 'animated',
-                    'typeAnnotation': {
-                      'type': 'BooleanTypeAnnotation'
-                    }
-                  }
-                ],
-                'returnTypeAnnotation': {
-                  'type': 'VoidTypeAnnotation'
-                }
-              }
-            }
-          ]
-        }
-      }
-    }
-  }
-}"
-`;
-
-exports[`RN Codegen Flow Parser can generate fixture COMMANDS_DEFINED_WITH_ALL_TYPES 1`] = `
-"{
-  'modules': {
-    'Module': {
-      'type': 'Component',
-      'components': {
-        'Module': {
-          'extendsProps': [
-            {
-              'type': 'ReactNativeBuiltInType',
-              'knownTypeName': 'ReactNativeCoreViewProps'
-            }
-          ],
-          'events': [],
-          'props': [],
-          'commands': [
-            {
-              'name': 'handleRootTag',
-              'optional': false,
-              'typeAnnotation': {
-                'type': 'FunctionTypeAnnotation',
-                'params': [
-                  {
-                    'name': 'rootTag',
-                    'typeAnnotation': {
-                      'type': 'ReservedTypeAnnotation',
-                      'name': 'RootTag'
-                    }
-                  }
-                ],
-                'returnTypeAnnotation': {
-                  'type': 'VoidTypeAnnotation'
-                }
-              }
-            },
-            {
-              'name': 'hotspotUpdate',
-              'optional': false,
-              'typeAnnotation': {
-                'type': 'FunctionTypeAnnotation',
-                'params': [
-                  {
-                    'name': 'x',
-                    'typeAnnotation': {
-                      'type': 'Int32TypeAnnotation'
-                    }
-                  },
-                  {
-                    'name': 'y',
-                    'typeAnnotation': {
-                      'type': 'Int32TypeAnnotation'
-                    }
-                  }
-                ],
-                'returnTypeAnnotation': {
-                  'type': 'VoidTypeAnnotation'
-                }
-              }
-            },
-            {
-              'name': 'scrollTo',
-              'optional': false,
-              'typeAnnotation': {
-                'type': 'FunctionTypeAnnotation',
-                'params': [
-                  {
-                    'name': 'x',
-                    'typeAnnotation': {
-                      'type': 'FloatTypeAnnotation'
-                    }
-                  },
-                  {
-                    'name': 'y',
-                    'typeAnnotation': {
-                      'type': 'Int32TypeAnnotation'
-                    }
-                  },
-                  {
-                    'name': 'z',
-                    'typeAnnotation': {
-                      'type': 'DoubleTypeAnnotation'
-                    }
-                  },
-                  {
-                    'name': 'animated',
+                    'optional': false,
                     'typeAnnotation': {
                       'type': 'BooleanTypeAnnotation'
                     }
@@ -2946,12 +3045,14 @@ exports[`RN Codegen Flow Parser can generate fixture COMMANDS_WITH_EXTERNAL_TYPE
                 'params': [
                   {
                     'name': 'y',
+                    'optional': false,
                     'typeAnnotation': {
                       'type': 'Int32TypeAnnotation'
                     }
                   },
                   {
                     'name': 'animated',
+                    'optional': false,
                     'typeAnnotation': {
                       'type': 'BooleanTypeAnnotation'
                     }
@@ -7490,6 +7591,74 @@ exports[`RN Codegen Flow Parser can generate fixture OBJECT_PROP_TYPES_NO_EVENTS
                     'typeAnnotation': {
                       'type': 'ReservedPropTypeAnnotation',
                       'name': 'EdgeInsetsPrimitive'
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              'name': 'dimension_required',
+              'optional': false,
+              'typeAnnotation': {
+                'type': 'ObjectTypeAnnotation',
+                'properties': [
+                  {
+                    'name': 'prop',
+                    'optional': false,
+                    'typeAnnotation': {
+                      'type': 'ReservedPropTypeAnnotation',
+                      'name': 'DimensionPrimitive'
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              'name': 'dimension_optional_key',
+              'optional': false,
+              'typeAnnotation': {
+                'type': 'ObjectTypeAnnotation',
+                'properties': [
+                  {
+                    'name': 'prop',
+                    'optional': true,
+                    'typeAnnotation': {
+                      'type': 'ReservedPropTypeAnnotation',
+                      'name': 'DimensionPrimitive'
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              'name': 'dimension_optional_value',
+              'optional': false,
+              'typeAnnotation': {
+                'type': 'ObjectTypeAnnotation',
+                'properties': [
+                  {
+                    'name': 'prop',
+                    'optional': true,
+                    'typeAnnotation': {
+                      'type': 'ReservedPropTypeAnnotation',
+                      'name': 'DimensionPrimitive'
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              'name': 'dimension_optional_both',
+              'optional': false,
+              'typeAnnotation': {
+                'type': 'ObjectTypeAnnotation',
+                'properties': [
+                  {
+                    'name': 'prop',
+                    'optional': true,
+                    'typeAnnotation': {
+                      'type': 'ReservedPropTypeAnnotation',
+                      'name': 'DimensionPrimitive'
                     }
                   }
                 ]

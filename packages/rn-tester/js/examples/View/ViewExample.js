@@ -17,17 +17,18 @@ const {
   Text,
   TouchableWithoutFeedback,
   View,
+  Platform,
 } = require('react-native');
 
 class ViewBorderStyleExample extends React.Component<
   $ReadOnly<{||}>,
   {|showBorder: boolean|},
 > {
-  state = {
+  state: {showBorder: boolean} = {
     showBorder: true,
   };
 
-  render() {
+  render(): React.Node {
     return (
       <TouchableWithoutFeedback onPress={this._handlePress}>
         <View>
@@ -86,11 +87,11 @@ class OffscreenAlphaCompositing extends React.Component<
     active: boolean,
   |},
 > {
-  state = {
+  state: {active: boolean} = {
     active: false,
   };
 
-  render() {
+  render(): React.Node {
     return (
       <TouchableWithoutFeedback onPress={this._handlePress}>
         <View>
@@ -168,11 +169,11 @@ class ZIndexExample extends React.Component<
     flipped: boolean,
   |},
 > {
-  state = {
+  state: {flipped: boolean} = {
     flipped: false,
   };
 
-  render() {
+  render(): React.Node {
     const indices = this.state.flipped ? [-1, 0, 1, 2] : [2, 1, 0, -1];
     return (
       <TouchableWithoutFeedback onPress={this._handlePress}>
@@ -238,11 +239,11 @@ class DisplayNoneStyle extends React.Component<
     index: number,
   |},
 > {
-  state = {
+  state: {index: number} = {
     index: 0,
   };
 
-  render() {
+  render(): React.Node {
     return (
       <TouchableWithoutFeedback onPress={this._handlePress}>
         <View>
@@ -298,6 +299,40 @@ class DisplayNoneStyle extends React.Component<
     this.setState({index: this.state.index + 1});
   };
 }
+
+class FlexGapExample extends React.Component<$ReadOnly<{||}>> {
+  render(): React.Node {
+    return (
+      <View
+        style={{
+          flexDirection: 'row',
+          flexWrap: 'wrap',
+          borderWidth: 1,
+          rowGap: 20,
+          columnGap: 30,
+        }}>
+        <View style={{backgroundColor: 'black', height: 30, width: 30}} />
+        <View style={{backgroundColor: 'black', height: 30, width: 30}} />
+        <View
+          style={{
+            backgroundColor: 'pink',
+            height: 30,
+            flexBasis: 30,
+          }}
+        />
+        <View style={{backgroundColor: 'black', height: 30, width: 30}} />
+        <View style={{backgroundColor: 'black', height: 30, width: 30}} />
+        <View style={{backgroundColor: 'black', height: 30, width: 30}} />
+        <View style={{backgroundColor: 'black', height: 30, width: 30}} />
+        <View style={{backgroundColor: 'pink', height: 30, width: 30}} />
+        <View style={{backgroundColor: 'pink', height: 30, width: 30}} />
+        <View style={{backgroundColor: 'pink', height: 30, width: 30}} />
+        <View style={{backgroundColor: 'pink', height: 30, width: 30}} />
+      </View>
+    );
+  }
+}
+
 exports.title = 'View';
 exports.documentationURL = 'https://reactnative.dev/docs/view';
 exports.category = 'Basic';
@@ -360,12 +395,29 @@ exports.examples = [
     title: 'Border Radius',
     render(): React.Node {
       return (
-        <View style={{borderWidth: 0.5, borderRadius: 5, padding: 5}}>
-          <Text style={{fontSize: 11}}>
-            Too much use of `borderRadius` (especially large radii) on anything
-            which is scrolling may result in dropped frames. Use sparingly.
-          </Text>
-        </View>
+        <>
+          <View style={{borderWidth: 0.5, borderRadius: 5, padding: 5}}>
+            <Text style={{fontSize: 11}}>
+              Too much use of `borderRadius` (especially large radii) on
+              anything which is scrolling may result in dropped frames. Use
+              sparingly.
+            </Text>
+          </View>
+          {Platform.OS === 'ios' && (
+            <View
+              style={{
+                borderRadius: 20,
+                padding: 8,
+                marginTop: 12,
+                backgroundColor: '#527FE4',
+                borderCurve: 'continuous',
+              }}>
+              <Text style={{fontSize: 16, color: 'white'}}>
+                View with continuous border curve
+              </Text>
+            </View>
+          )}
+        </>
       );
     },
   },
@@ -379,7 +431,7 @@ exports.examples = [
     title: 'Rounded Borders',
     render(): React.Node {
       return (
-        <View style={{flexDirection: 'row'}}>
+        <View style={{flexDirection: 'row', flexWrap: 'wrap'}}>
           <View
             style={{
               width: 50,
@@ -420,6 +472,42 @@ exports.examples = [
               borderBottomLeftRadius: 50,
               borderWidth: 10,
               marginRight: 10,
+            }}
+          />
+          <View
+            style={{
+              width: 50,
+              height: 50,
+              borderLeftWidth: 6,
+              borderTopWidth: 6,
+              borderTopLeftRadius: 20,
+            }}
+          />
+          <View
+            style={{
+              width: 50,
+              height: 50,
+              borderRightWidth: 6,
+              borderTopWidth: 6,
+              borderTopRightRadius: 20,
+            }}
+          />
+          <View
+            style={{
+              width: 50,
+              height: 50,
+              borderBottomWidth: 6,
+              borderLeftWidth: 6,
+              borderBottomLeftRadius: 20,
+            }}
+          />
+          <View
+            style={{
+              width: 50,
+              height: 50,
+              borderBottomWidth: 6,
+              borderRightWidth: 6,
+              borderBottomRightRadius: 20,
             }}
           />
         </View>
@@ -579,6 +667,149 @@ exports.examples = [
             </View>
           </View>
         </>
+      );
+    },
+  },
+  {
+    title: 'View with aria-label="label"',
+    render(): React.Node {
+      return (
+        <View
+          aria-label="Blue background View with Text"
+          style={{backgroundColor: '#527FE4', padding: 5}}>
+          <Text style={{fontSize: 11}}>Blue background</Text>
+        </View>
+      );
+    },
+  },
+  {
+    title: 'FlexGap',
+    render(): React.Node {
+      return <FlexGapExample />;
+    },
+  },
+  {
+    title: 'Insets',
+    render(): React.Node {
+      return (
+        <View style={{rowGap: 10}}>
+          <View style={{position: 'relative', height: 50, borderWidth: 1}}>
+            <View
+              style={{
+                backgroundColor: '#527FE4',
+                padding: 5,
+                position: 'absolute',
+                inset: 10,
+              }}>
+              <Text style={{fontSize: 11}}>inset 10</Text>
+            </View>
+          </View>
+          <View style={{position: 'relative', height: 50, borderWidth: 1}}>
+            <View
+              style={{
+                backgroundColor: '#527FE4',
+                padding: 5,
+                position: 'absolute',
+                insetBlock: 5,
+              }}>
+              <Text style={{fontSize: 11}}>insetBlock 5</Text>
+            </View>
+          </View>
+          <View style={{position: 'relative', height: 50, borderWidth: 1}}>
+            <View
+              style={{
+                backgroundColor: '#527FE4',
+                padding: 5,
+                position: 'absolute',
+                insetBlockEnd: 5,
+              }}>
+              <Text style={{fontSize: 11}}>insetBlockEnd 5</Text>
+            </View>
+          </View>
+          <View style={{position: 'relative', height: 50, borderWidth: 1}}>
+            <View
+              style={{
+                backgroundColor: '#527FE4',
+                padding: 5,
+                position: 'absolute',
+                insetBlockStart: 5,
+              }}>
+              <Text style={{fontSize: 11}}>insetBlockStart 5</Text>
+            </View>
+          </View>
+          <View style={{position: 'relative', height: 50, borderWidth: 1}}>
+            <View
+              style={{
+                backgroundColor: '#527FE4',
+                padding: 5,
+                position: 'absolute',
+                insetInline: 5,
+              }}>
+              <Text style={{fontSize: 11}}>insetInline 5</Text>
+            </View>
+          </View>
+          <View style={{position: 'relative', height: 50, borderWidth: 1}}>
+            <View
+              style={{
+                backgroundColor: '#527FE4',
+                padding: 5,
+                position: 'absolute',
+                insetInlineEnd: 5,
+              }}>
+              <Text style={{fontSize: 11}}>insetInlineEnd 5</Text>
+            </View>
+          </View>
+          <View style={{position: 'relative', height: 50, borderWidth: 1}}>
+            <View
+              style={{
+                backgroundColor: '#527FE4',
+                padding: 5,
+                position: 'absolute',
+                insetInlineStart: 5,
+              }}>
+              <Text style={{fontSize: 11}}>insetInlineStart 5</Text>
+            </View>
+          </View>
+        </View>
+      );
+    },
+  },
+  {
+    title: 'Logical Border Color',
+    render(): React.Node {
+      return (
+        <View style={{rowGap: 10}}>
+          <View style={{position: 'relative', height: 50, borderWidth: 1}}>
+            <View
+              style={{
+                borderBlockColor: 'orange',
+                borderWidth: 5,
+                position: 'absolute',
+                top: 10,
+                bottom: 10,
+                left: 10,
+                right: 10,
+              }}>
+              <Text style={{fontSize: 11}}>borderBlockColor orange</Text>
+            </View>
+          </View>
+          <View style={{position: 'relative', height: 65, borderWidth: 1}}>
+            <View
+              style={{
+                borderBlockEndColor: 'green',
+                borderBlockStartColor: 'purple',
+                borderWidth: 5,
+                position: 'absolute',
+                top: 10,
+                bottom: 10,
+                left: 10,
+                right: 10,
+              }}>
+              <Text style={{fontSize: 11}}>borderBlockStartColor purple</Text>
+              <Text style={{fontSize: 11}}>borderBlockEndColor green</Text>
+            </View>
+          </View>
+        </View>
       );
     },
   },

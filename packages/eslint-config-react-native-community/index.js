@@ -14,6 +14,9 @@ module.exports = {
 
   parserOptions: {
     sourceType: 'module',
+    ecmaFeatures: {
+      jsx: true,
+    },
   },
 
   extends: ['plugin:prettier/recommended'],
@@ -23,7 +26,7 @@ module.exports = {
     'react',
     'react-hooks',
     'react-native',
-    '@react-native-community',
+    '@react-native',
     'jest',
   ],
 
@@ -37,14 +40,18 @@ module.exports = {
     {
       files: ['*.js'],
       parser: '@babel/eslint-parser',
-      plugins: ['flowtype'],
+      plugins: ['ft-flow'],
       rules: {
         // Flow Plugin
-        // The following rules are made available via `eslint-plugin-flowtype`
+        // The following rules are made available via `eslint-plugin-ft-flow`
 
-        'flowtype/define-flow-type': 1,
-        'flowtype/use-flow-type': 1,
+        'ft-flow/define-flow-type': 1,
+        'ft-flow/use-flow-type': 1,
       },
+    },
+    {
+      files: ['*.jsx'],
+      parser: '@babel/eslint-parser',
     },
     {
       files: ['*.ts', '*.tsx'],
@@ -53,7 +60,10 @@ module.exports = {
       rules: {
         '@typescript-eslint/no-unused-vars': [
           'error',
-          {argsIgnorePattern: '^_'},
+          {
+            argsIgnorePattern: '^_',
+            destructuredArrayIgnorePattern: '^_',
+          },
         ],
         'no-unused-vars': 'off',
         'no-shadow': 'off',

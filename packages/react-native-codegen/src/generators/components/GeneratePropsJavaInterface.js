@@ -9,6 +9,7 @@
  */
 
 'use strict';
+import type {CommandParamTypeAnnotation} from '../../CodegenSchema';
 
 import type {
   NamedShape,
@@ -56,13 +57,13 @@ public interface ${className}<T extends ${extendClasses}> {
 }
 `;
 
-function addNullable(imports) {
+function addNullable(imports: Set<string>) {
   imports.add('import androidx.annotation.Nullable;');
 }
 
 function getJavaValueForProp(
   prop: NamedShape<PropTypeAnnotation>,
-  imports,
+  imports: Set<string>,
 ): string {
   const typeAnnotation = prop.typeAnnotation;
 
@@ -96,12 +97,18 @@ function getJavaValueForProp(
         case 'ImageSourcePrimitive':
           addNullable(imports);
           return '@Nullable ReadableMap value';
+        case 'ImageRequestPrimitive':
+          addNullable(imports);
+          return '@Nullable ReadableMap value';
         case 'PointPrimitive':
           addNullable(imports);
           return '@Nullable ReadableMap value';
         case 'EdgeInsetsPrimitive':
           addNullable(imports);
           return '@Nullable ReadableMap value';
+        case 'DimensionPrimitive':
+          addNullable(imports);
+          return '@Nullable YogaValue value';
         default:
           (typeAnnotation.name: empty);
           throw new Error('Received unknown ReservedPropTypeAnnotation');
@@ -120,13 +127,15 @@ function getJavaValueForProp(
     case 'Int32EnumTypeAnnotation':
       addNullable(imports);
       return '@Nullable Integer value';
+    case 'MixedTypeAnnotation':
+      return 'Dynamic value';
     default:
       (typeAnnotation: empty);
       throw new Error('Received invalid typeAnnotation');
   }
 }
 
-function generatePropsString(component: ComponentShape, imports) {
+function generatePropsString(component: ComponentShape, imports: Set<string>) {
   if (component.props.length === 0) {
     return '// No props';
   }
@@ -140,7 +149,7 @@ function generatePropsString(component: ComponentShape, imports) {
     .join('\n' + '  ');
 }
 
-function getCommandArgJavaType(param) {
+function getCommandArgJavaType(param: NamedShape<CommandParamTypeAnnotation>) {
   const {typeAnnotation} = param;
 
   switch (typeAnnotation.type) {
@@ -198,7 +207,7 @@ function generateCommandsString(
     .join('\n' + '  ');
 }
 
-function getClassExtendString(component): string {
+function getClassExtendString(component: ComponentShape): string {
   const extendString = component.extendsProps
     .map(extendProps => {
       switch (extendProps.type) {
@@ -231,7 +240,7 @@ module.exports = {
     const normalizedPackageName = 'com.facebook.react.viewmanagers';
     const outputDir = `java/${normalizedPackageName.replace(/\./g, '/')}`;
 
-    const files = new Map();
+    const files = new Map<string, string>();
     Object.keys(schema.modules).forEach(moduleName => {
       const module = schema.modules[moduleName];
       if (module.type !== 'Component') {
